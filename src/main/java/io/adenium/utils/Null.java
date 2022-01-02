@@ -1,6 +1,6 @@
 package io.adenium.utils;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 
 public class Null {
     private static final byte[]    b_array = new byte[0];
@@ -49,11 +49,11 @@ public class Null {
         return a;
     }
 
-    public static <T> T check(T a) throws WolkenException {
+    public static <T> T check(T a) throws AdeniumException {
         if (a != null) {
             return a;
         }
 
-        throw new WolkenException("provided data is null.");
+        throw new AdeniumException("provided data is null.");
     }
 }

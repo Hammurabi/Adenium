@@ -1,6 +1,6 @@
 package io.adenium.core;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.VersionInformation;
 import io.adenium.utils.ChainMath;
 
@@ -16,7 +16,7 @@ public class ContextParams {
 
     private BigInteger maximumTarget;
 
-    public ContextParams(boolean testNet, int loggingLevel) throws WolkenException {
+    public ContextParams(boolean testNet, int loggingLevel) throws AdeniumException {
         this.isTestNet = testNet;
 
         if (testNet) {

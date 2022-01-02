@@ -1,6 +1,6 @@
 package io.adenium.core;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
 
@@ -44,7 +44,7 @@ public class PrunedBlock extends SerializableI {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         blockHeader.write(stream);
         VarInt.writeCompactUInt32(transactions.size(), false, stream);
         VarInt.writeCompactUInt32(events.size(), false, stream);
@@ -57,7 +57,7 @@ public class PrunedBlock extends SerializableI {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         blockHeader.read(stream);
         int numTransactions = VarInt.readCompactUInt32(false, stream);
         int numEvents       = VarInt.readCompactUInt32(false, stream);
@@ -75,7 +75,7 @@ public class PrunedBlock extends SerializableI {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new PrunedBlock(new BlockHeader(), new LinkedList<>(), new LinkedList<>());
     }
 

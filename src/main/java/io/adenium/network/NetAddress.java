@@ -1,6 +1,6 @@
 package io.adenium.network;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import org.json.JSONObject;
 import io.adenium.core.Context;
@@ -88,11 +88,11 @@ public class NetAddress extends SerializableI implements Serializable, Comparabl
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         try {
             return (Type) new NetAddress(InetAddress.getLocalHost(), port, 0);
         } catch (UnknownHostException e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         }
     }
 

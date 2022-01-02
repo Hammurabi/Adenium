@@ -2,7 +2,7 @@ package io.adenium;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.utils.Utils;
 import io.adenium.utils.VarInt;
 
@@ -111,7 +111,7 @@ public class VarIntTests {
     }
 
     @Test
-    public void testReadWriteLossy128() throws IOException, WolkenException {
+    public void testReadWriteLossy128() throws IOException, AdeniumException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         BigInteger ints[] = new BigInteger[] {
@@ -138,7 +138,7 @@ public class VarIntTests {
     }
 
     @Test
-    public void testReadWriteLossless128() throws IOException, WolkenException {
+    public void testReadWriteLossless128() throws IOException, AdeniumException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         BigInteger ints[] = new BigInteger[] {
@@ -167,7 +167,7 @@ public class VarIntTests {
     }
 
     @Test
-    public void testReadWriteLossy256() throws IOException, WolkenException {
+    public void testReadWriteLossy256() throws IOException, AdeniumException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         BigInteger ints[] = new BigInteger[] {
@@ -199,7 +199,7 @@ public class VarIntTests {
     }
 
     @Test
-    public void testReadWriteLossless256() throws IOException, WolkenException {
+    public void testReadWriteLossless256() throws IOException, AdeniumException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         BigInteger ints[] = new BigInteger[] {

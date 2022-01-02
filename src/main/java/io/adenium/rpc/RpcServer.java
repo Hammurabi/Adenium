@@ -13,7 +13,7 @@ import io.adenium.core.transactions.Transaction;
 import io.adenium.crypto.Keypair;
 import io.adenium.encoders.Base16;
 import io.adenium.encoders.Base58;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.Message;
 import io.adenium.network.messages.Inv;
 import io.adenium.utils.ChainMath;
@@ -164,7 +164,7 @@ public class RpcServer {
                         Wallet wallet = new Wallet(name, pass);
                         Context.getInstance().getDatabase().storeWallet(wallet);
                         response.put("content", wallet.toJson());
-                    } catch (WolkenException e) {
+                    } catch (AdeniumException e) {
                         response.put("response", "failed");
                         response.put("reason", e.getMessage());
                     }
@@ -185,7 +185,7 @@ public class RpcServer {
                 } else {
                     try {
                         wallet = wallet.encrypt(pass.getBytes());
-                    } catch (WolkenException e) {
+                    } catch (AdeniumException e) {
                         response.put("response", "failed");
                         response.put("reason", e.getMessage());
                     }
@@ -220,7 +220,7 @@ public class RpcServer {
                     response.put("content", wallet.toJson());
                     Context.getInstance().getDatabase().storeWallet(wallet);
                 }
-                catch (WolkenException e) {
+                catch (AdeniumException e) {
                     response.put("response", "failed");
                     response.put("reason", e.getMessage());
                 }
@@ -275,7 +275,7 @@ public class RpcServer {
                 } else {
                     response.put("response", "success");
                 }
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 response.put("response", "failed");
                 response.put("reason", e.getMessage());
             }
@@ -291,7 +291,7 @@ public class RpcServer {
                     response.put("response", "success");
                     response.put("content", signed.toJson());
                 }
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 response.put("response", "failed");
                 response.put("reason", e.getMessage());
             }
@@ -313,7 +313,7 @@ public class RpcServer {
                     response.put("response", "success");
                     response.put("content", "transaction broadcast to '" + Context.getInstance().getServer().getConnectedNodes().size() + "' peers.");
                 }
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 response.put("response", "failed");
                 response.put("reason", e.getMessage());
             }
@@ -353,10 +353,10 @@ public class RpcServer {
                 } else {
                     String miner      = request.getString("miner");
                     if (!Base58.isEncoded(miner)) {
-                        throw new WolkenException("expected 'miner' to be base58 encoded.");
+                        throw new AdeniumException("expected 'miner' to be base58 encoded.");
                     }
                     if (!Address.isValidAddress(Base58.decode(miner))) {
-                        throw new WolkenException("expected 'miner' to be a valid address.");
+                        throw new AdeniumException("expected 'miner' to be a valid address.");
                     }
                     String dmsg       = "";
                     if (request.has("msg")) {
@@ -371,7 +371,7 @@ public class RpcServer {
                 JSONObject jsonHeader = header.toJson();
                 jsonHeader.put("raw", Base16.encode(header.asByteArray()));
                 response.put("content", jsonHeader);
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 response.put("response", "failed");
                 response.put("reason", e.getMessage());
             }
@@ -389,11 +389,11 @@ public class RpcServer {
         msg.send("application/json", response.toString().getBytes());
     }
 
-    private void submitNonce(byte[] nonce) throws WolkenException {
+    private void submitNonce(byte[] nonce) throws AdeniumException {
         mutex.lock();
         try {
             if (nextBlock == null) {
-                throw new WolkenException("no block currently being mined.");
+                throw new AdeniumException("no block currently being mined.");
             }
 
             nextBlock.getBlock().setNonce(Utils.makeInt(nonce));
@@ -403,7 +403,7 @@ public class RpcServer {
 //                System.out.println("submitted '" + Integer.toUnsignedLong(nextBlock.getBlock().getNonce()) + "'.");
 //                System.out.println(Arrays.toString(nextBlock.getBlock().getBlockHeader().asByteArray()));
 //                System.out.println(Base16.encode(nextBlock.getBlock().getBlockHeader().getHashCode()));
-                throw new WolkenException("invalid proof of work.");
+                throw new AdeniumException("invalid proof of work.");
             }
 
             // create a candidate block
@@ -417,7 +417,7 @@ public class RpcServer {
         }
     }
 
-    private BlockIndex createNextBlock() throws WolkenException {
+    private BlockIndex createNextBlock() throws AdeniumException {
         mutex.lock();
         try {
             nextBlock = Context.getInstance().getBlockChain().fork();

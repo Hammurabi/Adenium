@@ -7,7 +7,7 @@ import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
 import io.adenium.crypto.CryptoLib;
 import io.adenium.crypto.Key;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.utils.Utils;
 
 import java.math.BigInteger;
@@ -39,7 +39,7 @@ public class ECPublicKey extends Key {
     }
 
     @Override
-    public Key getCompressed() throws WolkenException {
+    public Key getCompressed() throws AdeniumException {
         if (key[0] == 0x04) {
             ECPoint point = CryptoLib.getCurve().getCurve().decodePoint(key);
             ECParameterSpec ecParameterSpec = ECNamedCurveTable.getParameterSpec("secp256k1");
@@ -49,13 +49,13 @@ public class ECPublicKey extends Key {
             try {
                 keyFactory = KeyFactory.getInstance("EC");
             } catch (NoSuchAlgorithmException e) {
-                throw new WolkenException(e);
+                throw new AdeniumException(e);
             }
 
             try {
                 return new ECPublicKey(((BCECPublicKey) keyFactory.generatePublic(publicKeySpec)).getQ().getEncoded(true));
             } catch (InvalidKeySpecException e) {
-                throw new WolkenException(e);
+                throw new AdeniumException(e);
             }
         }
 
@@ -63,7 +63,7 @@ public class ECPublicKey extends Key {
     }
 
     @Override
-    public Key getDecompressed() throws WolkenException {
+    public Key getDecompressed() throws AdeniumException {
         if (key[0] == 0x04) {
             return this;
         }
@@ -76,13 +76,13 @@ public class ECPublicKey extends Key {
         try {
             keyFactory = KeyFactory.getInstance("EC");
         } catch (NoSuchAlgorithmException e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         }
 
         try {
             return new ECPublicKey(((BCECPublicKey) keyFactory.generatePublic(publicKeySpec)).getQ().getEncoded(false));
         } catch (InvalidKeySpecException e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         }
     }
 

@@ -1,6 +1,6 @@
 package io.adenium.core;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.Utils;
 import io.adenium.utils.VarInt;
@@ -68,7 +68,7 @@ public class BlockMetadata extends SerializableI {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         getBlockHeader().write(stream);
         Utils.writeInt(getFlags(), stream);
         VarInt.writeCompactUInt32(getHeight(), false, stream);
@@ -80,7 +80,7 @@ public class BlockMetadata extends SerializableI {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         getBlockHeader().read(stream);
         flags = Utils.readInt(stream);
         height = VarInt.readCompactUInt32(false, stream);
@@ -92,7 +92,7 @@ public class BlockMetadata extends SerializableI {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new BlockMetadata();
     }
 

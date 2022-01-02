@@ -1,7 +1,7 @@
 package io.adenium.core;
 
 import io.adenium.encoders.Base16;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.HashUtil;
 import io.adenium.utils.Utils;
@@ -86,7 +86,7 @@ public class BlockHeader extends SerializableI {
             outputStream.close();
 
             return outputStream.toByteArray();
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             return null;
         }
     }
@@ -100,11 +100,11 @@ public class BlockHeader extends SerializableI {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         writeBlockHeader(stream);
     }
 
-    public void writeBlockHeader(OutputStream stream) throws IOException, WolkenException {
+    public void writeBlockHeader(OutputStream stream) throws IOException, AdeniumException {
         Utils.writeInt(version, stream);
         Utils.writeInt(timestamp, stream);
         stream.write(previousHash);
@@ -114,7 +114,7 @@ public class BlockHeader extends SerializableI {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         version     = Utils.readInt(stream);
         timestamp   = Utils.readInt(stream);
         checkFullyRead(stream.read(previousHash), Block.UniqueIdentifierLength);
@@ -134,7 +134,7 @@ public class BlockHeader extends SerializableI {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new BlockHeader();
     }
 

@@ -2,7 +2,7 @@ package io.adenium.papaya.compiler;
 
 import io.adenium.encoders.Base16;
 import io.adenium.exceptions.PapayaException;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.papaya.runtime.OpcodeRegister;
 import io.adenium.utils.VarInt;
 
@@ -115,7 +115,7 @@ public class ProgramWriter {
         builder.append("\t").append(integer).append(" ").append(preserve).append("\n");
         try {
             VarInt.writeCompactUint256(integer.not(), preserve, outputStream);
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             throw new PapayaException(e);
         }
     }
@@ -128,7 +128,7 @@ public class ProgramWriter {
         builder.append("\t").append(integer).append(" ").append(preserve).append("\n");
         try {
             VarInt.writeCompactUint256(integer, preserve, outputStream);
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             throw new PapayaException(e);
         }
     }

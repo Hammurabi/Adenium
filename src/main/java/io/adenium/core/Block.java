@@ -2,12 +2,11 @@ package io.adenium.core;
 
 import io.adenium.core.transactions.MintTransaction;
 import io.adenium.core.transactions.Transaction;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.ChainMath;
 import io.adenium.utils.Utils;
 import io.adenium.utils.VarInt;
-import org.wolkenproject.utils.*;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -71,7 +70,7 @@ public class Block extends SerializableI implements Iterable<Transaction> {
         return true;
     }
 
-    public void build(int blockHeight) throws WolkenException {
+    public void build(int blockHeight) throws AdeniumException {
         MintTransaction mint = (MintTransaction) getTransactions().iterator().next();
         mint.setFees(getFees());
         // create the state change object.
@@ -144,7 +143,7 @@ public class Block extends SerializableI implements Iterable<Transaction> {
             //TODO:
             try {
                 transaction.getStateChange(this, blockStateChange);
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 return false;
             }
 
@@ -160,7 +159,7 @@ public class Block extends SerializableI implements Iterable<Transaction> {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         blockHeader.write(stream);
         VarInt.writeCompactUInt32(transactions.size(), false, stream);
         for (Transaction transaction : transactions)
@@ -171,7 +170,7 @@ public class Block extends SerializableI implements Iterable<Transaction> {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         blockHeader.read(stream);
         int length = VarInt.readCompactUInt32(false, stream);
 
@@ -182,7 +181,7 @@ public class Block extends SerializableI implements Iterable<Transaction> {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new Block();
     }
 
@@ -262,7 +261,7 @@ public class Block extends SerializableI implements Iterable<Transaction> {
         return transactions;
     }
 
-    public byte[] getSerializedTransactions() throws IOException, WolkenException {
+    public byte[] getSerializedTransactions() throws IOException, AdeniumException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         for (Transaction transaction : transactions) {
             transaction.serialize(outputStream);
@@ -271,11 +270,11 @@ public class Block extends SerializableI implements Iterable<Transaction> {
         return outputStream.toByteArray();
     }
 
-    public byte[] getSerializedEvents() throws IOException, WolkenException {
+    public byte[] getSerializedEvents() throws IOException, AdeniumException {
         return null;
     }
 
-    public void write(OutputStream outputStream, boolean writeLocally) throws IOException, WolkenException {
+    public void write(OutputStream outputStream, boolean writeLocally) throws IOException, AdeniumException {
         write(outputStream);
         if (writeLocally) {
             // start writing events

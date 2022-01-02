@@ -2,7 +2,7 @@ package io.adenium.crypto;
 
 import io.adenium.crypto.ec.ECPublicKey;
 import io.adenium.crypto.ec.ECSig;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
@@ -54,7 +54,7 @@ public class CryptoLib {
         HALF_CURVE_ORDER = PARAMS.getN().shiftRight(1);
     }
 
-    public static Key recoverFromSignature(int recId, ECSig sig, byte[] message) throws WolkenException {
+    public static Key recoverFromSignature(int recId, ECSig sig, byte[] message) throws AdeniumException {
         Assertions.assertTrue(recId >= 0, "recId must be positive");
         Assertions.assertTrue(sig.getR().signum() >= 0, "r must be positive");
         Assertions.assertTrue(sig.getS().signum() >= 0, "s must be positive");
@@ -126,7 +126,7 @@ public class CryptoLib {
      * @param curveName The curvename to use with key creation (secp256k1 by default).
      * @return A PrivateKey object.
      */
-    public final PrivateKey genPrivateKey(BigInteger s, String curveName) throws WolkenException {
+    public final PrivateKey genPrivateKey(BigInteger s, String curveName) throws AdeniumException {
         try {
             ECParameterSpec ecParameterSpec = ECNamedCurveTable.getParameterSpec(curveName);
 
@@ -140,21 +140,21 @@ public class CryptoLib {
                 }
 
                 if (key.getD().equals(BigInteger.ZERO))
-                    throw new WolkenException("Resulting private key is ZERO.");
+                    throw new AdeniumException("Resulting private key is ZERO.");
 
-                throw new WolkenException("P%N==0.");
+                throw new AdeniumException("P%N==0.");
             }
 
             if (key.getD().equals(BigInteger.ZERO))
-                throw new WolkenException("Resulting private key is ZERO.");
+                throw new AdeniumException("Resulting private key is ZERO.");
 
             return key;
-        } catch (WolkenException e) {
+        } catch (AdeniumException e) {
             throw e;
         } catch (NoSuchAlgorithmException e) {
-            throw new WolkenException(e.getMessage());
+            throw new AdeniumException(e.getMessage());
         } catch (InvalidKeySpecException e) {
-            throw new WolkenException(e.getMessage());
+            throw new AdeniumException(e.getMessage());
         }
     }
 
@@ -182,15 +182,15 @@ public class CryptoLib {
         return point;
     }
 
-    public BCECPublicKey derivePublicKey(BCECPrivateKey key) throws WolkenException {
-        if (key == null) throw new WolkenException("cannot derivePublicKey public key from null private-key.");
+    public BCECPublicKey derivePublicKey(BCECPrivateKey key) throws AdeniumException {
+        if (key == null) throw new AdeniumException("cannot derivePublicKey public key from null private-key.");
 
         ECPoint point = new FixedPointCombMultiplier().multiply(CURVE.getG(), key.getD());
 
         return (BCECPublicKey) generatePublicKey(ec_point_point2oct(point.getEncoded(false), false), "secp256k1");
     }
 
-    public BCECPublicKey derivePublicKey(BigInteger privateKey) throws WolkenException {
+    public BCECPublicKey derivePublicKey(BigInteger privateKey) throws AdeniumException {
         BCECPrivateKey bcecPrivateKey = (BCECPrivateKey) genPrivateKey(privateKey, "secp256k1");
         return derivePublicKey(bcecPrivateKey);
     }
@@ -200,7 +200,7 @@ public class CryptoLib {
      * @param data A double sha256 of the data to be signed.
      * @return A Valid signature byte array.
      */
-    public final byte[] sign(BCECPrivateKey priv, byte data[]) throws WolkenException {
+    public final byte[] sign(BCECPrivateKey priv, byte data[]) throws AdeniumException {
         try {
             java.security.Signature dsa = java.security.Signature.getInstance("SHA256withECDSA", "BC");
 
@@ -210,7 +210,7 @@ public class CryptoLib {
 
             return dsa.sign();
         } catch ( Throwable throwable ) {
-            throw new WolkenException(throwable);
+            throw new AdeniumException(throwable);
         }
     }
 
@@ -220,7 +220,7 @@ public class CryptoLib {
      * @param sig The signature to verify.
      * @return True only if the Public key is derived from the signing private key.
      */
-    public final boolean verifySignature(BCECPublicKey pubkey, byte[] data, byte[] sig) throws WolkenException {
+    public final boolean verifySignature(BCECPublicKey pubkey, byte[] data, byte[] sig) throws AdeniumException {
         try {
             java.security.Signature signature = java.security.Signature.getInstance("SHA256withECDSA");
             signature.initVerify(pubkey);
@@ -229,7 +229,7 @@ public class CryptoLib {
 
             return signature.verify(sig);
         } catch (Throwable throwable) {
-            throw new WolkenException(throwable);
+            throw new AdeniumException(throwable);
         }
     }
 }

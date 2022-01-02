@@ -1,6 +1,6 @@
 package io.adenium.core;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
 
@@ -64,7 +64,7 @@ public class Ancestors extends SerializableI {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         stream.write(hash);
         VarInt.writeCompactUInt32(hashes.size(), false, stream);
         for (byte hash[] : hashes) {
@@ -73,7 +73,7 @@ public class Ancestors extends SerializableI {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         int length = VarInt.readCompactUInt32(false, stream);
 
         for (int i = 0; i < length; i ++) {
@@ -84,7 +84,7 @@ public class Ancestors extends SerializableI {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new Ancestors(new byte[Block.UniqueIdentifierLength]);
     }
 

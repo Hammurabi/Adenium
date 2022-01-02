@@ -1,9 +1,8 @@
 package io.adenium.network.messages;
 
 import io.adenium.core.Context;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.*;
-import org.wolkenproject.network.*;
 import io.adenium.serialization.SerializableI;
 
 import java.io.IOException;
@@ -32,12 +31,12 @@ public class VerackMessage extends Message {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
         versionInformation.write(stream);
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
         versionInformation.read(stream);
     }
 
@@ -52,7 +51,7 @@ public class VerackMessage extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         try {
             return (Type) new VerackMessage(0, new VersionInformation());
         } catch (UnknownHostException e) {

@@ -4,7 +4,7 @@ import io.adenium.encoders.Base16;
 import io.adenium.exceptions.EmptyProgramCounterException;
 import io.adenium.exceptions.PapayaException;
 import io.adenium.exceptions.UndefOpcodeException;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.papaya.parser.Program;
 import io.adenium.utils.ByteArray;
 import io.adenium.utils.Utils;
@@ -34,7 +34,7 @@ public class ProgramCounter {
     public BigInteger nextVarint256(boolean preserveAllBits) throws EmptyProgramCounterException {
         try {
             return VarInt.readCompactUint256(preserveAllBits, program);
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             throw new EmptyProgramCounterException();
         }
     }
@@ -42,7 +42,7 @@ public class ProgramCounter {
     public BigInteger nextVarint128(boolean preserveAllBits) throws EmptyProgramCounterException {
         try {
         return VarInt.readCompactUint128(preserveAllBits, program);
-    } catch (IOException | WolkenException e) {
+    } catch (IOException | AdeniumException e) {
         throw new EmptyProgramCounterException();
     }
     }

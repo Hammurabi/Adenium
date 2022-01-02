@@ -7,14 +7,13 @@ import io.adenium.crypto.CryptoLib;
 import io.adenium.crypto.ec.ECKeypair;
 import io.adenium.encoders.Base16;
 import io.adenium.encoders.Base58;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.NetAddress;
 import io.adenium.utils.FileService;
 import io.adenium.utils.Logger;
 import io.adenium.wallet.BasicWallet;
 import org.apache.commons.cli.*;
 import org.fusesource.jansi.AnsiConsole;
-import org.wolkenproject.core.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -22,7 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Start {
-    public static void main(String args[]) throws ParseException, WolkenException, IOException {
+    public static void main(String args[]) throws ParseException, AdeniumException, IOException {
         CryptoLib.getInstance();
         AnsiConsole.systemInstall();
 
@@ -70,13 +69,13 @@ public class Start {
         if (cmd.hasOption("quick_sign")) {
             String qsArgs[] = cmd.getOptionValues("quick_sign");
             if (qsArgs.length != 5) {
-                throw new WolkenException("quicksend expects 5 arguments, '"+qsArgs.length+"' provided.");
+                throw new AdeniumException("quicksend expects 5 arguments, '"+qsArgs.length+"' provided.");
             }
 
             BasicWallet wallet = new BasicWallet(mainDirectory.newFile(qsArgs[3]));
 
             if (!Address.isValidAddress(Base58.decode(qsArgs[0]))) {
-                throw new WolkenException("address '" + qsArgs[0] + "' is invalid.");
+                throw new AdeniumException("address '" + qsArgs[0] + "' is invalid.");
             }
 
             long amount = Long.parseLong(qsArgs[1]);
@@ -110,7 +109,7 @@ public class Start {
                 byte bytes[] = Base58.decode(b58);
 
                 if (!Address.isValidAddress(bytes)) {
-                    throw new WolkenException("invalid address '" + b58 + "' provided.");
+                    throw new AdeniumException("invalid address '" + b58 + "' provided.");
                 }
 
                 address[i ++] = Address.fromFormatted(bytes);
@@ -134,7 +133,7 @@ public class Start {
 
         if (cmd.hasOption("enable_verbose")) {
             if (!cmd.getOptionValue("enable_verbose").matches("[1-5]")) {
-                throw new WolkenException("'enable_verbose' expected a number between '1-5'.");
+                throw new AdeniumException("'enable_verbose' expected a number between '1-5'.");
             }
 
             verbosity = Integer.parseInt(cmd.getOptionValue("enable_verbosity"));

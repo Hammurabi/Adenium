@@ -1,7 +1,7 @@
 package io.adenium.serialization;
 
 import io.adenium.core.Context;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.utils.HashUtil;
 import io.adenium.utils.VarInt;
 
@@ -12,25 +12,25 @@ import java.util.zip.InflaterInputStream;
 
 public abstract class SerializableI {
     // this function gets called when the Serializable object is serialized locally
-    public void serialize(OutputStream stream) throws IOException, WolkenException {
+    public void serialize(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt32(getSerialNumber(), false, stream);
         write(stream);
     }
 
     // this function gets called when the Serializable object is sent over network
-    public void serializeOverNetwork(OutputStream stream) throws IOException, WolkenException {
+    public void serializeOverNetwork(OutputStream stream) throws IOException, AdeniumException {
         serialize(stream);
     }
 
     // this function gets called when the Serializable object is sent over network
-    public void sendOverNetwork(OutputStream stream) throws IOException, WolkenException {
+    public void sendOverNetwork(OutputStream stream) throws IOException, AdeniumException {
         write(stream);
     }
 
-    public abstract void write(OutputStream stream) throws IOException, WolkenException;
-    public abstract void read(InputStream stream) throws IOException, WolkenException;
+    public abstract void write(OutputStream stream) throws IOException, AdeniumException;
+    public abstract void read(InputStream stream) throws IOException, AdeniumException;
 
-    public <T> T fromBytes(byte bytes[]) throws IOException, WolkenException {
+    public <T> T fromBytes(byte bytes[]) throws IOException, AdeniumException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
         read(inputStream);
         return (T) this;
@@ -44,7 +44,7 @@ public abstract class SerializableI {
             outputStream.close();
 
             return outputStream.toByteArray();
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             return null;
         }
     }
@@ -58,7 +58,7 @@ public abstract class SerializableI {
             outputStream.close();
 
             return byteArrayOutputStream.toByteArray();
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             return null;
         }
     }
@@ -71,12 +71,12 @@ public abstract class SerializableI {
             outputStream.close();
 
             return outputStream.toByteArray();
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             return null;
         }
     }
 
-    public <Type extends SerializableI> Type makeCopy() throws IOException, WolkenException {
+    public <Type extends SerializableI> Type makeCopy() throws IOException, AdeniumException {
         byte array[] = asSerializedArray();
         BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(array));
         Type t = Context.getInstance().getSerialFactory().fromStream(inputStream);
@@ -85,7 +85,7 @@ public abstract class SerializableI {
         return t;
     }
 
-    public abstract <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException;
+    public abstract <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException;
 
     public byte[] checksum() {
         return HashUtil.hash160(asByteArray());
@@ -107,7 +107,7 @@ public abstract class SerializableI {
         return read;
     }
 
-    public <T> T fromCompressed(byte[] compressed) throws IOException, WolkenException {
+    public <T> T fromCompressed(byte[] compressed) throws IOException, AdeniumException {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(compressed);
         InflaterInputStream inputStream = new InflaterInputStream(byteArrayInputStream);
         read(inputStream);

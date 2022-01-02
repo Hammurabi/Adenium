@@ -2,7 +2,6 @@ package io.adenium.papaya.archive;
 
 import io.adenium.papaya.compiler.*;
 import io.adenium.exceptions.PapayaException;
-import org.wolkenproject.papaya.compiler.*;
 import io.adenium.utils.Pair;
 
 import java.util.ArrayList;

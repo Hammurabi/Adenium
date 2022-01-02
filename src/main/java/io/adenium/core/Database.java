@@ -2,7 +2,7 @@ package io.adenium.core;
 
 import io.adenium.core.transactions.Transaction;
 import io.adenium.encoders.Base16;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.FileService;
 import io.adenium.utils.Utils;
@@ -75,7 +75,7 @@ public class Database {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
             return Context.getInstance().getSerialFactory().fromStream(inputStream);
-        } catch (WolkenException | IOException e) {
+        } catch (AdeniumException | IOException e) {
             e.printStackTrace();
         }
 
@@ -100,7 +100,7 @@ public class Database {
             block = new Block().fromBytes(compressed);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (WolkenException e) {
+        } catch (AdeniumException e) {
             e.printStackTrace();
         }
 
@@ -148,7 +148,7 @@ public class Database {
 
             // store the actual compressed block data.
             put(Utils.concatenate(PrunedBlockPrefix, hash), pruned);
-        } catch (WolkenException e) {
+        } catch (AdeniumException e) {
             e.printStackTrace();
         }
     }
@@ -189,7 +189,7 @@ public class Database {
 
             // store the actual compressed block data.
             put(Utils.concatenate(CompressedBlockPrefix, hash), outputStream.toByteArray());
-        } catch (WolkenException | IOException e) {
+        } catch (AdeniumException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -245,7 +245,7 @@ public class Database {
             return Context.getInstance().getSerialFactory().fromBytes(bytes, theClass);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (WolkenException e) {
+        } catch (AdeniumException e) {
             e.printStackTrace();
         }
 
@@ -358,7 +358,7 @@ public class Database {
             try {
                 account.read(inputStream);
                 inputStream.close();
-            } catch (IOException | WolkenException e) {
+            } catch (IOException | AdeniumException e) {
                 e.printStackTrace();
                 return null;
             }
@@ -373,7 +373,7 @@ public class Database {
         return null;
     }
 
-    public void storeContract(Address contractAddress, byte contract[]) throws WolkenException {
+    public void storeContract(Address contractAddress, byte contract[]) throws AdeniumException {
         mutex.lock();
         try {
             OutputStream outputStream = location.newFile(".contracts").newFile(Base16.encode(contractAddress.getRaw())).openFileOutputStream();
@@ -381,7 +381,7 @@ public class Database {
             outputStream.flush();
             outputStream.close();
         } catch (IOException e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         } finally {
             mutex.unlock();
         }

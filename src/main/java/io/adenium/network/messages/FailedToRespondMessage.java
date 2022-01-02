@@ -1,7 +1,7 @@
 package io.adenium.network.messages;
 
 import io.adenium.core.Context;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.Node;
 import io.adenium.network.Server;
 import io.adenium.serialization.SerializableI;
@@ -26,12 +26,12 @@ public class FailedToRespondMessage extends ResponseMessage {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
         Utils.writeLong(reasonFlags, stream);
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
         byte buffer[] = new byte[8];
         reasonFlags = Utils.makeLong(buffer);
     }
@@ -42,7 +42,7 @@ public class FailedToRespondMessage extends ResponseMessage {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new FailedToRespondMessage(0, 0, new byte[UniqueIdentifierLength]);
     }
 

@@ -3,18 +3,17 @@ package io.adenium;
 import io.adenium.core.ResourceManager;
 import io.adenium.crypto.CryptoLib;
 import io.adenium.exceptions.PapayaException;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.papaya.archive.PapayaArchive;
 import io.adenium.papaya.compiler.PapayaApplication;
 import io.adenium.papaya.compiler.PapayaCompiler;
-import org.wolkenproject.papaya.compiler.*;
 import io.adenium.papaya.compiler.Compiler;
 import io.adenium.papaya.runtime.OpcodeRegister;
 
 import java.io.IOException;
 
 public class TestCompile {
-    public void testCompile() throws WolkenException, IOException, PapayaException {
+    public void testCompile() throws AdeniumException, IOException, PapayaException {
         CryptoLib.getInstance();
         String program = ResourceManager.getString("/papaya/contract.pya");
         String librariesProgram = ResourceManager.getString("/papaya/libraries.pya");
@@ -28,7 +27,7 @@ public class TestCompile {
         System.out.println(application.toString());
     }
 
-    public static void main(String args[]) throws WolkenException, IOException, PapayaException {
+    public static void main(String args[]) throws AdeniumException, IOException, PapayaException {
         new TestCompile().testCompile();
     }
 }

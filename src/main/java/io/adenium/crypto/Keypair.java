@@ -2,7 +2,7 @@ package io.adenium.crypto;
 
 import io.adenium.crypto.ec.ECKeypair;
 import io.adenium.crypto.ec.ECPrivateKey;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 
 import java.security.SecureRandom;
 import java.util.Random;
@@ -24,20 +24,20 @@ public abstract class Keypair {
         return publicKey;
     }
 
-    public abstract Signature sign(byte message[]) throws WolkenException;
+    public abstract Signature sign(byte message[]) throws AdeniumException;
 
-    public static Keypair ellipticCurvePair() throws WolkenException {
+    public static Keypair ellipticCurvePair() throws AdeniumException {
         return ellipticCurvePair(new SecureRandom());
     }
 
-    public static Keypair ellipticCurvePair(Random random) throws WolkenException {
+    public static Keypair ellipticCurvePair(Random random) throws AdeniumException {
         byte pkBytes[] = new byte[32];
         random.nextBytes(pkBytes);
 
         return ellipticCurvePair(new ECPrivateKey(pkBytes));
     }
 
-    private static Keypair ellipticCurvePair(Key privateKey) throws WolkenException {
+    private static Keypair ellipticCurvePair(Key privateKey) throws AdeniumException {
         return new ECKeypair(privateKey);
     }
 }

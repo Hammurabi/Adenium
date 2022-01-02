@@ -2,7 +2,7 @@ package io.adenium.network.messages;
 
 import io.adenium.core.Block;
 import io.adenium.core.Context;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.Node;
 import io.adenium.network.Server;
 import io.adenium.serialization.SerializableI;
@@ -24,7 +24,7 @@ public class BlockList extends ResponseMessage {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt32(blocks.size(), false, stream);
         for (Block block : blocks) {
             block.write(stream);
@@ -32,7 +32,7 @@ public class BlockList extends ResponseMessage {
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
         int length = VarInt.readCompactUInt32(false, stream);
 
         for (int i = 0; i < length; i ++)
@@ -40,7 +40,7 @@ public class BlockList extends ResponseMessage {
             try {
                 Block block = Context.getInstance().getSerialFactory().fromStream(Context.getInstance().getSerialFactory().getSerialNumber(Block.class), stream);
                 blocks.add(block);
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 throw new IOException(e);
             }
         }
@@ -52,7 +52,7 @@ public class BlockList extends ResponseMessage {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new BlockList(getVersion(), blocks, getUniqueMessageIdentifier());
     }
 

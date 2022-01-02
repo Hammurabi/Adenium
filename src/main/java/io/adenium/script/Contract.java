@@ -5,7 +5,7 @@ import io.adenium.core.events.DestroyContractEvent;
 import io.adenium.core.events.NewAccountEvent;
 import io.adenium.core.transactions.Transaction;
 import io.adenium.exceptions.ContractException;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.core.Account;
 import io.adenium.core.Address;
@@ -77,13 +77,13 @@ public abstract class Contract extends SerializableI {
     }
 
     @Override
-    public final void write(OutputStream stream) throws IOException, WolkenException {
+    public final void write(OutputStream stream) throws IOException, AdeniumException {
         stream.write(contractId);
         writeContract(stream);
     }
 
     @Override
-    public final void read(InputStream stream) throws IOException, WolkenException {
+    public final void read(InputStream stream) throws IOException, AdeniumException {
         checkFullyRead(stream.read(contractId), IdentifierLength);
         readContract(stream);
     }

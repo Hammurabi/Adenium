@@ -3,12 +3,11 @@ package io.adenium.core.transactions;
 import io.adenium.core.*;
 import io.adenium.crypto.ec.RecoverableSignature;
 import org.json.JSONObject;
-import org.wolkenproject.core.*;
 import io.adenium.crypto.Keypair;
 import io.adenium.crypto.Signature;
 import io.adenium.encoders.Base16;
 import io.adenium.encoders.Base58;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.serialization.SerializationFactory;
 import io.adenium.utils.HashUtil;
@@ -30,7 +29,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         ValidTransaction,
     }
 
-    public static Transaction fromJson(JSONObject transaction) throws WolkenException {
+    public static Transaction fromJson(JSONObject transaction) throws AdeniumException {
         if (transaction != null) {
             // check for the header information
             if (transaction.has("name") && transaction.has("version")) {
@@ -51,14 +50,14 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
                     } else if (Base58.isEncoded(recipient)) {
                         recipientBytes  = Base58.decode(recipient);
                     } else {
-                        throw new WolkenException("'recipient' expected to be base58 encoded.");
+                        throw new AdeniumException("'recipient' expected to be base58 encoded.");
                     }
 
                     Address address = null;
 
                     if (recipientBytes.length != 20) {
                         if (!Address.isValidAddress(recipientBytes)) {
-                            throw new WolkenException("'recipient' expected to be a valid address.");
+                            throw new AdeniumException("'recipient' expected to be a valid address.");
                         } else {
                             address = Address.fromFormatted(recipientBytes);
                         }
@@ -102,7 +101,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
             }
         }
 
-        throw new WolkenException("could not convert to a transaction.");
+        throw new AdeniumException("could not convert to a transaction.");
     }
 
     public static final class Flags
@@ -150,7 +149,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         check the sender has funds
      */
     public abstract TransactionCode checkTransaction();
-    public abstract Address getSender() throws WolkenException;
+    public abstract Address getSender() throws AdeniumException;
     public abstract Address getRecipient();
     public abstract boolean hasMultipleSenders();
     public abstract boolean hasMultipleRecipients();
@@ -181,7 +180,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         return all the changes this transaction will
         cause to the global state.
      */
-    public abstract void getStateChange(Block block, BlockStateChange stateChange) throws WolkenException;
+    public abstract void getStateChange(Block block, BlockStateChange stateChange) throws AdeniumException;
 
     public JSONObject toJson() {
         return toJson(true, false);
@@ -189,7 +188,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
 
     public abstract JSONObject toJson(boolean txEvt, boolean evHash);
 
-    public Transaction sign(Keypair keypair) throws WolkenException {
+    public Transaction sign(Keypair keypair) throws AdeniumException {
         // this includes the version bytes
         byte tx[] = asSerializedArray();
         Signature signature = keypair.sign(tx);
@@ -204,12 +203,12 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         return Base16.encode(getHash());
     }
 
-    protected abstract void setSignature(Signature signature) throws WolkenException;
+    protected abstract void setSignature(Signature signature) throws AdeniumException;
 
     protected abstract Transaction copyForSignature();
 
     // multiple recipients and senders might be possible in the future
-    public Address[] getSenders() throws WolkenException {
+    public Address[] getSenders() throws AdeniumException {
         return new Address[] { getSender() };
     }
     public Address[] getRecipients() {
@@ -320,7 +319,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        public Address getSender() throws WolkenException {
+        public Address getSender() throws AdeniumException {
             return Address.fromKey(signature.recover(asByteArray()));
         }
 
@@ -328,7 +327,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         public Address getRecipient() {
             try {
                 return Address.newContractAddress(getSender().getRaw(), nonce);
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 return null;
             }
         }
@@ -361,7 +360,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        public void getStateChange(Block block, BlockStateChange stateChange) throws WolkenException {
+        public void getStateChange(Block block, BlockStateChange stateChange) throws AdeniumException {
             if (stateChangeEvents == null) {
                 stateChangeEvents = new ArrayList<>();
             }
@@ -375,12 +374,12 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        protected void setSignature(Signature signature) throws WolkenException {
+        protected void setSignature(Signature signature) throws AdeniumException {
             if (signature instanceof RecoverableSignature) {
                 this.signature = (RecoverableSignature) signature;
             }
 
-            throw new WolkenException("invalid signature type '" + signature.getClass() + "'.");
+            throw new AdeniumException("invalid signature type '" + signature.getClass() + "'.");
         }
 
         @Override
@@ -389,7 +388,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        public void write(OutputStream stream) throws IOException, WolkenException {
+        public void write(OutputStream stream) throws IOException, AdeniumException {
             VarInt.writeCompactUInt64(value, false, stream);
             VarInt.writeCompactUInt64(fee, false, stream);
             VarInt.writeCompactUInt64(nonce, false, stream);
@@ -399,7 +398,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        public void read(InputStream stream) throws IOException, WolkenException {
+        public void read(InputStream stream) throws IOException, AdeniumException {
             value   = VarInt.readCompactUInt64(false, stream);
             fee     = VarInt.readCompactUInt64(false, stream);
             nonce   = VarInt.readCompactUInt64(false, stream);
@@ -412,7 +411,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+        public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
             return (Type) new PayloadTransaction();
         }
 
@@ -494,7 +493,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        public void getStateChange(Block block, BlockStateChange stateChange) throws WolkenException {
+        public void getStateChange(Block block, BlockStateChange stateChange) throws AdeniumException {
         }
 
         @Override
@@ -503,7 +502,7 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        protected void setSignature(Signature signature) throws WolkenException {
+        protected void setSignature(Signature signature) throws AdeniumException {
         }
 
         @Override
@@ -512,15 +511,15 @@ public abstract class Transaction extends SerializableI implements Comparable<Tr
         }
 
         @Override
-        public void write(OutputStream stream) throws IOException, WolkenException {
+        public void write(OutputStream stream) throws IOException, AdeniumException {
         }
 
         @Override
-        public void read(InputStream stream) throws IOException, WolkenException {
+        public void read(InputStream stream) throws IOException, AdeniumException {
         }
 
         @Override
-        public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+        public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
             return null;
         }
 

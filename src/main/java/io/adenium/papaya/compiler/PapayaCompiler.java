@@ -7,8 +7,7 @@ import org.json.JSONObject;
 import io.adenium.core.ResourceManager;
 import io.adenium.crypto.CryptoLib;
 import io.adenium.exceptions.PapayaException;
-import io.adenium.exceptions.WolkenException;
-import org.wolkenproject.papaya.archive.*;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.papaya.parser.DynamicParser;
 import io.adenium.papaya.parser.Node;
 import io.adenium.papaya.parser.Parser;
@@ -30,7 +29,7 @@ public class PapayaCompiler extends Compiler {
     private Map<String, Integer> identifiers;
     private ObfuscationStrategy obfuscationStrategy;
 
-    public static void main(String args[]) throws IOException, PapayaException, WolkenException {
+    public static void main(String args[]) throws IOException, PapayaException, AdeniumException {
         CryptoLib.getInstance();
         String program = ResourceManager.getString("/papaya/contract.pya");
         String librariesProgram = ResourceManager.getString("/papaya/libraries.pya");
@@ -393,7 +392,7 @@ public class PapayaCompiler extends Compiler {
     }
 
     @Override
-    public PapayaArchive createArchive(String text, String compilerArguments) throws PapayaException, WolkenException {
+    public PapayaArchive createArchive(String text, String compilerArguments) throws PapayaException, AdeniumException {
         String cArgs[]  = compilerArguments.split(" ");
         obfuscationStrategy = new ObfuscationStrategy.KeepNames();
 
@@ -541,7 +540,7 @@ public class PapayaCompiler extends Compiler {
     }
 
     @Override
-    public PapayaApplication compile(PapayaArchive archive, PapayaArchive libraries, String compilerArguments) throws PapayaException, WolkenException, IOException {
+    public PapayaApplication compile(PapayaArchive archive, PapayaArchive libraries, String compilerArguments) throws PapayaException, AdeniumException, IOException {
         return archive.compile(compilerArguments, new CompilationScope(archive, libraries, opcodeRegister, traverserMap));
     }
 

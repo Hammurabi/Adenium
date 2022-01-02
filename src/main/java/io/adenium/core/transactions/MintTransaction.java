@@ -5,12 +5,11 @@ import io.adenium.core.Block;
 import io.adenium.core.BlockStateChange;
 import io.adenium.core.Context;
 import org.json.JSONObject;
-import org.wolkenproject.core.*;
 import io.adenium.core.events.MintRewardEvent;
 import io.adenium.crypto.Signature;
 import io.adenium.encoders.Base16;
 import io.adenium.encoders.Base58;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.ChainMath;
 import io.adenium.utils.VarInt;
@@ -75,7 +74,7 @@ public class MintTransaction extends Transaction {
     }
 
     @Override
-    public Address getSender() throws WolkenException {
+    public Address getSender() throws AdeniumException {
         return null;
     }
 
@@ -127,7 +126,7 @@ public class MintTransaction extends Transaction {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt64(value, false, stream);
         stream.write(recipient);
         VarInt.writeCompactUInt32(dump.length, false, stream);
@@ -137,7 +136,7 @@ public class MintTransaction extends Transaction {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         value = VarInt.readCompactUInt64(false, stream);
         checkFullyRead(stream.read(recipient), Address.RawLength);
         int length = VarInt.readCompactUInt32(false, stream);
@@ -150,7 +149,7 @@ public class MintTransaction extends Transaction {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new MintTransaction();
     }
 

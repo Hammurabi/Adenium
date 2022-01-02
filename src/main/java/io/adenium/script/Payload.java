@@ -1,7 +1,7 @@
 package io.adenium.script;
 
 import io.adenium.exceptions.ContractException;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 
 import java.io.IOException;
@@ -17,16 +17,16 @@ public abstract class Payload extends SerializableI {
 
     public abstract int getVersion();
 
-    public abstract void writePayload(OutputStream stream) throws IOException, WolkenException;
-    public abstract void readPayload(InputStream stream) throws IOException, WolkenException;
+    public abstract void writePayload(OutputStream stream) throws IOException, AdeniumException;
+    public abstract void readPayload(InputStream stream) throws IOException, AdeniumException;
 
     @Override
-    public final void write(OutputStream stream) throws IOException, WolkenException {
+    public final void write(OutputStream stream) throws IOException, AdeniumException {
         writePayload(stream);
     }
 
     @Override
-    public final void read(InputStream stream) throws IOException, WolkenException {
+    public final void read(InputStream stream) throws IOException, AdeniumException {
         readPayload(stream);
     }
 }

@@ -4,8 +4,7 @@ import io.adenium.core.*;
 import io.adenium.network.messages.Inv;
 import io.adenium.network.messages.RequestBlocks;
 import io.adenium.network.messages.RequestHeadersBefore;
-import org.wolkenproject.core.*;
-import io.adenium.exceptions.WolkenTimeoutException;
+import io.adenium.exceptions.AdeniumTimeoutException;
 import io.adenium.network.CheckedResponse;
 import io.adenium.network.Message;
 import io.adenium.network.Node;
@@ -172,7 +171,7 @@ public class PeerBlockCandidate extends CandidateBlock {
                     closeConnection();
                     return false;
                 }
-            } catch (WolkenTimeoutException e) {
+            } catch (AdeniumTimeoutException e) {
                 return false;
             }
         }
@@ -244,7 +243,7 @@ public class PeerBlockCandidate extends CandidateBlock {
             if (!response.noErrors()) {
                 return null;
             }
-        } catch (WolkenTimeoutException e) {
+        } catch (AdeniumTimeoutException e) {
             e.printStackTrace();
         }
 
@@ -322,7 +321,7 @@ public class PeerBlockCandidate extends CandidateBlock {
                     if (!response.noErrors()) {
                         return null;
                     }
-                } catch (WolkenTimeoutException e) {
+                } catch (AdeniumTimeoutException e) {
                     e.printStackTrace();
                 }
 

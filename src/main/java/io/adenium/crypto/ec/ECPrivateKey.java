@@ -7,7 +7,7 @@ import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import io.adenium.crypto.CryptoLib;
 import io.adenium.crypto.CryptoUtil;
 import io.adenium.crypto.Key;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.utils.HashUtil;
 import io.adenium.utils.Utils;
 
@@ -42,12 +42,12 @@ public class ECPrivateKey extends Key {
     }
 
     @Override
-    public Key getCompressed() throws WolkenException {
+    public Key getCompressed() throws AdeniumException {
         return this;
     }
 
     @Override
-    public Key getDecompressed() throws WolkenException {
+    public Key getDecompressed() throws AdeniumException {
         return this;
     }
 

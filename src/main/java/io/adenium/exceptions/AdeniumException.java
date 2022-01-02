@@ -1,17 +1,17 @@
 package io.adenium.exceptions;
 
-public class WolkenException extends Exception {
+public class AdeniumException extends Exception {
     private static final long serialVersionUID = 5112431926980310096L;
 
-    public WolkenException(){
+    public AdeniumException(){
     }
 
-    public WolkenException(String msg)
+    public AdeniumException(String msg)
     {
         super(msg);
     }
 
-    public WolkenException(Throwable cause)
+    public AdeniumException(Throwable cause)
     {
         super(cause);
     }

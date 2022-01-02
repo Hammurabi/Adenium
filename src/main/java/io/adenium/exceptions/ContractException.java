@@ -1,6 +1,6 @@
 package io.adenium.exceptions;
 
-public class ContractException extends WolkenException {
+public class ContractException extends AdeniumException {
     public ContractException() {
     }
 

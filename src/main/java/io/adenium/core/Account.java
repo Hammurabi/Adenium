@@ -1,6 +1,6 @@
 package io.adenium.core;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
 import org.json.JSONObject;
@@ -32,7 +32,7 @@ public class Account extends SerializableI {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         // in the case of nonce 2^61-1 should suffice for now
         VarInt.writeCompactUInt64(nonce, false, stream);
         // as for balance, coincidentally/fortunately, the maximum
@@ -48,7 +48,7 @@ public class Account extends SerializableI {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         nonce   = VarInt.readCompactUInt64(false, stream);
         balance = VarInt.readCompactUInt64(false, stream);
 
@@ -60,7 +60,7 @@ public class Account extends SerializableI {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new Account(0, 0, false, 0);
     }
 

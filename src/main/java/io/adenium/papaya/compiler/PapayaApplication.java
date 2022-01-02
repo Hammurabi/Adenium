@@ -3,7 +3,7 @@ package io.adenium.papaya.compiler;
 import io.adenium.core.Context;
 import io.adenium.exceptions.ContractException;
 import io.adenium.exceptions.PapayaException;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.script.Invoker;
 import io.adenium.script.Payload;
 import io.adenium.serialization.SerializableI;
@@ -46,7 +46,7 @@ public class PapayaApplication extends Payload {
         return version;
     }
 
-    public void writePayload(OutputStream stream) throws IOException, WolkenException {
+    public void writePayload(OutputStream stream) throws IOException, AdeniumException {
         // write a header that contains informations about the application
         //TODO: find a better way to write the flags automagically.
         VarInt.writeCompactFlags(flags, stream);
@@ -95,12 +95,12 @@ public class PapayaApplication extends Payload {
     }
 
     @Override
-    public void readPayload(InputStream stream) throws IOException, WolkenException {
+    public void readPayload(InputStream stream) throws IOException, AdeniumException {
         version = VarInt.readCompactUInt32(false, stream);
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new PapayaApplication(version);
     }
 

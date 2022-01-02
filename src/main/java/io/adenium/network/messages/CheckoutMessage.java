@@ -1,7 +1,7 @@
 package io.adenium.network.messages;
 
 import io.adenium.core.Context;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.Message;
 import io.adenium.network.Node;
 import io.adenium.network.ResponseMetadata;
@@ -60,12 +60,12 @@ public class CheckoutMessage extends Message {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt32(reason, false, stream);
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
         reason = VarInt.readCompactUInt32(false, stream);
     }
 
@@ -80,7 +80,7 @@ public class CheckoutMessage extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new CheckoutMessage(0);
     }
 

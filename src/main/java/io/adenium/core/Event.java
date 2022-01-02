@@ -5,7 +5,6 @@ import io.adenium.serialization.SerializableI;
 import io.adenium.serialization.SerializationFactory;
 import io.adenium.utils.HashUtil;
 import org.json.JSONObject;
-import org.wolkenproject.core.events.*;
 
 public abstract class Event extends SerializableI {
     public static void register(SerializationFactory serializationFactory) {

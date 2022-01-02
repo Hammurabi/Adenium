@@ -7,9 +7,7 @@ import io.adenium.core.Context;
 import io.adenium.core.transactions.Transaction;
 import io.adenium.network.messages.Inv;
 import io.adenium.utils.*;
-import org.wolkenproject.core.*;
 import io.adenium.network.Message;
-import org.wolkenproject.utils.*;
 
 import java.math.BigInteger;
 import java.util.*;

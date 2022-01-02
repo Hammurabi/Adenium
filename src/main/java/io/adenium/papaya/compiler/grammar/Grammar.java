@@ -6,7 +6,6 @@ import io.adenium.papaya.parser.ParseLiteral;
 import io.adenium.papaya.parser.ParseRuleReference;
 import io.adenium.papaya.parser.Rule;
 import io.adenium.papaya.parser.Subrule;
-import org.wolkenproject.papaya.parser.*;
 
 import java.util.*;
 

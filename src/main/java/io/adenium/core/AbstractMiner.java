@@ -3,7 +3,7 @@ package io.adenium.core;
 import io.adenium.core.consensus.CandidateBlock;
 import io.adenium.core.consensus.MinedBlockCandidate;
 import io.adenium.core.transactions.Transaction;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.messages.Inv;
 import io.adenium.utils.ChainMath;
 
@@ -17,7 +17,7 @@ public abstract class AbstractMiner implements Runnable {
         this.miningAddress = miningAddress;
     }
 
-    public abstract void mine(Block block) throws WolkenException;
+    public abstract void mine(Block block) throws AdeniumException;
 
     @Override
     public void run() {
@@ -52,7 +52,7 @@ public abstract class AbstractMiner implements Runnable {
                     // broadcast the block
                     Context.getInstance().getServer().broadcast(new Inv(Inv.Type.Block, list));
                 }
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 e.printStackTrace();
             }
         }

@@ -9,7 +9,6 @@ import io.adenium.papaya.parser.Rule;
 import io.adenium.papaya.parser.Subrule;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.wolkenproject.papaya.parser.*;
 
 import java.util.*;
 

@@ -4,7 +4,7 @@ import org.json.JSONObject;
 import io.adenium.core.Context;
 import io.adenium.core.Event;
 import io.adenium.encoders.Base58;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.Utils;
 
@@ -45,17 +45,17 @@ public class NewAccountEvent extends Event {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         stream.write(address);
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         checkFullyRead(stream.read(address), address.length);
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new NewAccountEvent(new byte[address.length]);
     }
 

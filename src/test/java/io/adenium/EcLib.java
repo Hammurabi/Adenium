@@ -4,13 +4,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import io.adenium.crypto.Keypair;
 import io.adenium.crypto.Signature;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 
 import java.security.SecureRandom;
 
 public class EcLib {
     @Test
-    void verifyMatchingSignatures() throws WolkenException {
+    void verifyMatchingSignatures() throws AdeniumException {
         SecureRandom random = new SecureRandom();
         byte message[] = new byte[256];
 
@@ -32,7 +32,7 @@ public class EcLib {
     }
 
     @Test
-    void verifyDisproportionateSignatures() throws WolkenException {
+    void verifyDisproportionateSignatures() throws AdeniumException {
         SecureRandom random = new SecureRandom();
         byte message1[] = new byte[256];
         byte message2[] = new byte[256];
@@ -56,7 +56,7 @@ public class EcLib {
     }
 
     @Test
-    void recoverKeyFromSignature() throws WolkenException {
+    void recoverKeyFromSignature() throws AdeniumException {
         SecureRandom random = new SecureRandom();
         byte message[] = new byte[256];
 

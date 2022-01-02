@@ -2,7 +2,7 @@ package io.adenium.papaya.compiler;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 
 import java.util.*;
 
@@ -54,7 +54,7 @@ public class PapayaLexer {
         symbolSet.add('?');
     }
 
-    public TokenStream ingest(String program, JSONArray tokens) throws WolkenException {
+    public TokenStream ingest(String program, JSONArray tokens) throws AdeniumException {
         List<TokenBuilder> builderList = new ArrayList<>();
         TokenStream tokenStream = new TokenStream();
 
@@ -186,7 +186,7 @@ public class PapayaLexer {
         return null;
     }
 
-    private String escape(char character) throws WolkenException {
+    private String escape(char character) throws AdeniumException {
         switch (character) {
             case 'n':
                 return "\n";
@@ -199,7 +199,7 @@ public class PapayaLexer {
             case '"':
                 return "\"";
             default:
-                throw new WolkenException("escaping invalid character '" + character + "'.");
+                throw new AdeniumException("escaping invalid character '" + character + "'.");
         }
     }
 
@@ -211,7 +211,7 @@ public class PapayaLexer {
         return string.startsWith("'") || string.startsWith("\"");
     }
 
-    private static Token getToken(String string, int line, int offset, JSONArray typeMap) throws WolkenException {
+    private static Token getToken(String string, int line, int offset, JSONArray typeMap) throws AdeniumException {
         if ((string.startsWith("'") && string.endsWith("'")) || (string.startsWith("\"") && string.endsWith("\""))) {
             String str = "";
             if (string.length() > 2) {
@@ -236,6 +236,6 @@ public class PapayaLexer {
             }
         }
 
-        throw new WolkenException("could not create token for string '" + string + "'" + " at line: " + line + " offset: " + offset + ".");
+        throw new AdeniumException("could not create token for string '" + string + "'" + " at line: " + line + " offset: " + offset + ".");
     }
 }

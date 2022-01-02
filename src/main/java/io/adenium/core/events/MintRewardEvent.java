@@ -4,7 +4,7 @@ import org.json.JSONObject;
 import io.adenium.core.Context;
 import io.adenium.core.Event;
 import io.adenium.encoders.Base58;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.Utils;
 import io.adenium.utils.VarInt;
@@ -45,19 +45,19 @@ public class MintRewardEvent extends Event {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         stream.write(address);
         VarInt.writeCompactUInt64(amount, false, stream);
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         checkFullyRead(stream.read(address), address.length);
         amount = VarInt.readCompactUInt64(false, stream);
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new MintRewardEvent(new byte[address.length], 0);
     }
 

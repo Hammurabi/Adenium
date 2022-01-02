@@ -3,11 +3,10 @@ package io.adenium.core.transactions;
 import io.adenium.core.*;
 import io.adenium.crypto.ec.RecoverableSignature;
 import org.json.JSONObject;
-import org.wolkenproject.core.*;
 import io.adenium.core.events.RegisterAliasEvent;
 import io.adenium.crypto.Signature;
 import io.adenium.encoders.Base16;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
 
@@ -89,14 +88,14 @@ public class RegisterAliasTransaction extends Transaction {
             }
 
             return TransactionCode.ValidTransaction;
-        } catch (WolkenException e) {
+        } catch (AdeniumException e) {
         }
 
         return TransactionCode.InvalidTransaction;
     }
 
     @Override
-    public Address getSender() throws WolkenException {
+    public Address getSender() throws AdeniumException {
         return Address.fromKey(signature.recover(asByteArray()));
     }
 
@@ -129,7 +128,7 @@ public class RegisterAliasTransaction extends Transaction {
     }
 
     @Override
-    public void getStateChange(Block block, BlockStateChange stateChange) throws WolkenException {
+    public void getStateChange(Block block, BlockStateChange stateChange) throws AdeniumException {
         Address sender = getSender();
         stateChange.createAccountIfDoesNotExist(sender.getRaw());
         stateChange.addEvent(new RegisterAliasEvent(sender.getRaw(), alias));
@@ -143,12 +142,12 @@ public class RegisterAliasTransaction extends Transaction {
     }
 
     @Override
-    protected void setSignature(Signature signature) throws WolkenException {
+    protected void setSignature(Signature signature) throws AdeniumException {
         if (signature instanceof RecoverableSignature) {
             this.signature = (RecoverableSignature) signature;
         }
 
-        throw new WolkenException("invalid signature type '" + signature.getClass() + "'.");
+        throw new AdeniumException("invalid signature type '" + signature.getClass() + "'.");
     }
 
     @Override
@@ -157,19 +156,19 @@ public class RegisterAliasTransaction extends Transaction {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         signature.write(stream);
         VarInt.writeCompactUInt64(alias, false, stream);
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         signature.read(stream);
         alias = VarInt.readCompactUInt64(false, stream);
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new RegisterAliasTransaction();
     }
 

@@ -4,15 +4,13 @@ import io.adenium.core.*;
 import io.adenium.core.transactions.Transaction;
 import io.adenium.crypto.ec.RecoverableSignature;
 import io.adenium.network.messages.*;
-import org.wolkenproject.core.*;
 import io.adenium.core.assets.Asset;
 import io.adenium.exceptions.InvalidSerialNumberException;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.AddressList;
 import io.adenium.network.Message;
 import io.adenium.network.NetAddress;
 import io.adenium.network.VersionInformation;
-import org.wolkenproject.network.messages.*;
 import io.adenium.utils.VarInt;
 
 import java.io.ByteArrayInputStream;
@@ -34,7 +32,7 @@ public class SerializationFactory {
         magicReferences = new HashMap<>();
     }
 
-    public static void register(SerializationFactory serializationFactory) throws UnknownHostException, WolkenException {
+    public static void register(SerializationFactory serializationFactory) throws UnknownHostException, AdeniumException {
         Transaction.register(serializationFactory);
         Asset.register(serializationFactory);
 
@@ -82,17 +80,17 @@ public class SerializationFactory {
         magicReferences.put(magic, serializableInstance);
     }
 
-    public <Type extends SerializableI> Type fromStream(Class<?> classType, InputStream stream) throws IOException, WolkenException {
+    public <Type extends SerializableI> Type fromStream(Class<?> classType, InputStream stream) throws IOException, AdeniumException {
         return fromStream(getSerialNumber(classType), stream);
     }
 
-    public <Type extends SerializableI> Type fromStream(InputStream stream) throws IOException, WolkenException {
+    public <Type extends SerializableI> Type fromStream(InputStream stream) throws IOException, AdeniumException {
         int magic = VarInt.readCompactUInt32(false, stream);
 
         return fromStream(magic, stream);
     }
 
-    public <Type extends SerializableI> Type fromStream(int magic, InputStream stream) throws IOException, WolkenException {
+    public <Type extends SerializableI> Type fromStream(int magic, InputStream stream) throws IOException, AdeniumException {
         SerializableI serializable  = magicReferences.get(validateMagicNumber(magic));
 
         Type result                 = serializable.newInstance();
@@ -114,7 +112,7 @@ public class SerializationFactory {
         return classMagicReferences.get(classType);
     }
 
-    public <Type extends SerializableI> Type fromBytes(byte[] bytes, Class<?> theClass) throws IOException, WolkenException {
+    public <Type extends SerializableI> Type fromBytes(byte[] bytes, Class<?> theClass) throws IOException, AdeniumException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
         try {
             return fromStream(theClass, inputStream);

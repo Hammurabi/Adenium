@@ -1,7 +1,7 @@
 package io.adenium.papaya.intermediate;
 
 import io.adenium.exceptions.PapayaException;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.papaya.runtime.DefaultHandler;
 import io.adenium.papaya.runtime.PapayaNumber;
 import io.adenium.papaya.runtime.Scope;
@@ -24,13 +24,13 @@ public class PushInt256 implements Opcode {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         byte value[] = new byte[32];
         stream.read(value);
         this.value = new BigInteger(value);
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
     }
 }

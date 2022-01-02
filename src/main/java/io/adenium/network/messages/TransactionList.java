@@ -2,7 +2,7 @@ package io.adenium.network.messages;
 
 import io.adenium.core.Context;
 import io.adenium.core.transactions.Transaction;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.Node;
 import io.adenium.network.Server;
 import io.adenium.serialization.SerializableI;
@@ -28,7 +28,7 @@ public class TransactionList extends ResponseMessage {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt32(transactions.size(), false, stream);
         for (Transaction transaction : transactions)
         {
@@ -37,14 +37,14 @@ public class TransactionList extends ResponseMessage {
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
         int length = VarInt.readCompactUInt32(false, stream);
 
         for (int i = 0; i < length; i++) {
             try {
                 Transaction transaction = Context.getInstance().getSerialFactory().fromStream(Context.getInstance().getSerialFactory().getSerialNumber(Transaction.class), stream);
                 transactions.add(transaction);
-            } catch (WolkenException e) {
+            } catch (AdeniumException e) {
                 throw new IOException(e);
             }
         }
@@ -56,7 +56,7 @@ public class TransactionList extends ResponseMessage {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new TransactionList(getVersion(), transactions, getUniqueMessageIdentifier());
     }
 

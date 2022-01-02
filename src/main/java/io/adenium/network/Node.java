@@ -1,13 +1,12 @@
 package io.adenium.network;
 
-import io.adenium.exceptions.WolkenException;
-import io.adenium.exceptions.WolkenTimeoutException;
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.exceptions.AdeniumTimeoutException;
 import io.adenium.network.messages.FailedToRespondMessage;
 import io.adenium.utils.ByteArray;
 import io.adenium.utils.Utils;
 import org.json.JSONObject;
 import io.adenium.core.Context;
-import org.wolkenproject.utils.*;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -63,7 +62,7 @@ public class Node implements Runnable {
         }
     }
 
-    public CheckedResponse getResponse(Message message, long timeOut) throws WolkenTimeoutException {
+    public CheckedResponse getResponse(Message message, long timeOut) throws AdeniumTimeoutException {
         boolean shouldWait = false;
         byte id[] = message.getUniqueMessageIdentifier();
 
@@ -87,7 +86,7 @@ public class Node implements Runnable {
                 }
             }
 
-            throw new WolkenTimeoutException("timed out while waiting for response");
+            throw new AdeniumTimeoutException("timed out while waiting for response");
         }
 
         return null;
@@ -211,7 +210,7 @@ public class Node implements Runnable {
                     errors += Context.getInstance().getContextParams().getMaxNetworkErrors();
                     stream = null;
                     currentMessageSize = -1;
-                    throw new WolkenException("message content exceeds the maximum size allowed by the protocol.");
+                    throw new AdeniumException("message content exceeds the maximum size allowed by the protocol.");
                 }
             }
 
@@ -229,7 +228,7 @@ public class Node implements Runnable {
                 stream = null;
                 currentMessageSize = -1;
             }
-        } catch (WolkenException | IOException e) {
+        } catch (AdeniumException | IOException e) {
             e.printStackTrace();
             errors ++;
             if (stream != null) {
@@ -263,7 +262,7 @@ public class Node implements Runnable {
             inputStream.close();
 
             return checkSpam(message);
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             errors++;
             e.printStackTrace();
             return null;
@@ -308,7 +307,7 @@ public class Node implements Runnable {
                 // notify the message that it was sent
                 message.onSend(this);
             }
-        } catch (IOException | WolkenException e) {
+        } catch (IOException | AdeniumException e) {
             e.printStackTrace();
         } finally {
             mutex.unlock();

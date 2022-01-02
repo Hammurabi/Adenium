@@ -1,6 +1,6 @@
 package io.adenium.utils;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.core.Context;
 
@@ -19,7 +19,7 @@ public class SerializableCollectionWrapper<T extends SerializableI> extends Seri
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt32(collection.iterator().next().getSerialNumber(), false, stream);
         VarInt.writeCompactUInt32(collection.size(), false, stream);
         for (T t : collection) {
@@ -28,7 +28,7 @@ public class SerializableCollectionWrapper<T extends SerializableI> extends Seri
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         int slvn = VarInt.readCompactUInt32(false, stream);
         int size = VarInt.readCompactUInt32(false, stream);
         List<T> list = new ArrayList<>();
@@ -40,7 +40,7 @@ public class SerializableCollectionWrapper<T extends SerializableI> extends Seri
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new SerializableCollectionWrapper<T>(new ArrayList<>());
     }
 

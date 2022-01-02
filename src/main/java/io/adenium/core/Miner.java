@@ -1,6 +1,6 @@
 package io.adenium.core;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.utils.ChainMath;
 import io.adenium.utils.HashUtil;
 
@@ -10,7 +10,7 @@ public class Miner extends AbstractMiner {
     }
 
     @Override
-    public void mine(Block block) throws WolkenException {
+    public void mine(Block block) throws AdeniumException {
         BlockHeader header  = block.getBlockHeader();
         byte hash[]         = header.getHashCode();
         int nonce           = 0;

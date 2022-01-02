@@ -4,14 +4,12 @@ import io.adenium.core.Block;
 import io.adenium.core.BlockHeader;
 import io.adenium.core.Context;
 import io.adenium.network.*;
-import org.wolkenproject.core.*;
 import io.adenium.core.consensus.CandidateBlock;
 import io.adenium.core.consensus.PeerBlockCandidate;
 import io.adenium.core.transactions.MintTransaction;
 import io.adenium.core.transactions.Transaction;
-import io.adenium.exceptions.WolkenException;
-import io.adenium.exceptions.WolkenTimeoutException;
-import org.wolkenproject.network.*;
+import io.adenium.exceptions.AdeniumException;
+import io.adenium.exceptions.AdeniumTimeoutException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.Pair;
 import io.adenium.utils.VarInt;
@@ -108,7 +106,7 @@ public class Inv extends Message {
                         block.destroy();
                     }
                 });
-            } catch (WolkenTimeoutException e) {
+            } catch (AdeniumTimeoutException e) {
                 e.printStackTrace();
                 node.increaseErrors(2);
             }
@@ -155,7 +153,7 @@ public class Inv extends Message {
                 } else {
                     node.increaseErrors(4);
                 }
-            } catch (WolkenTimeoutException e) {
+            } catch (AdeniumTimeoutException e) {
                 node.increaseErrors(2);
                 e.printStackTrace();
             }
@@ -163,7 +161,7 @@ public class Inv extends Message {
     }
 
     @Override
-    public void writeContents(OutputStream stream) throws IOException, WolkenException {
+    public void writeContents(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt32(type, false, stream);
         VarInt.writeCompactUInt32(list.size(), false, stream);
 
@@ -173,7 +171,7 @@ public class Inv extends Message {
     }
 
     @Override
-    public void readContents(InputStream stream) throws IOException, WolkenException {
+    public void readContents(InputStream stream) throws IOException, AdeniumException {
         type = VarInt.readCompactUInt32(false, stream);
         int length = VarInt.readCompactUInt32(false, stream);
 
@@ -209,7 +207,7 @@ public class Inv extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new Inv(getVersion(), 0, new LinkedHashSet<>());
     }
 

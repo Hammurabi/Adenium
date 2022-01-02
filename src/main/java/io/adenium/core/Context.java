@@ -1,15 +1,13 @@
 package io.adenium.core;
 
 import io.adenium.core.consensus.AbstractBlockChain;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.IpAddressList;
 import io.adenium.network.NetAddress;
 import io.adenium.network.Server;
 import io.adenium.papaya.runtime.OpcodeRegister;
 import io.adenium.serialization.SerializationFactory;
 import io.adenium.utils.FileService;
-import org.wolkenproject.network.*;
-import org.wolkenproject.papaya.runtime.*;
 import io.adenium.rpc.RpcServer;
 
 import java.io.IOException;
@@ -38,7 +36,7 @@ public class Context {
     private FileService fileService;
     private CompressionEngine       compressionEngine;
 
-    public Context(FileService service, int rpcPort, boolean testNet, Address[] payList, Set<NetAddress> forceConnections, boolean pruned, int verbosity) throws WolkenException, IOException {
+    public Context(FileService service, int rpcPort, boolean testNet, Address[] payList, Set<NetAddress> forceConnections, boolean pruned, int verbosity) throws AdeniumException, IOException {
         Context.instance = this;
         this.scheduler = new TaskScheduler();
         this.database = new Database(service);

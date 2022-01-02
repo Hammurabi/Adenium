@@ -1,6 +1,6 @@
 package io.adenium.utils;
 
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 
 import java.io.ByteArrayOutputStream;
@@ -379,9 +379,9 @@ public class VarInt {
     // when preserveAllBits is true, then the resulting
     // integer will only be 124 bits in length as 4 bits
     // will be used to encode the length of the integer.
-    public static void writeCompactUint128(BigInteger integer, boolean preserveAllBits, OutputStream stream) throws WolkenException, IOException {
+    public static void writeCompactUint128(BigInteger integer, boolean preserveAllBits, OutputStream stream) throws AdeniumException, IOException {
         if (integer.bitLength() > 128) {
-            throw new WolkenException("writeCompactUint128 only allows up to  2^128 bits.");
+            throw new AdeniumException("writeCompactUint128 only allows up to  2^128 bits.");
         }
 
         if (preserveAllBits) {
@@ -404,7 +404,7 @@ public class VarInt {
         }
     }
 
-    public static BigInteger readCompactUint128(boolean preserveAllBits, InputStream stream) throws WolkenException, IOException {
+    public static BigInteger readCompactUint128(boolean preserveAllBits, InputStream stream) throws AdeniumException, IOException {
         if (preserveAllBits) {
             int length      = SerializableI.checkNotEOF(stream.read());
             byte bytes[]    = new byte[length];
@@ -449,15 +449,15 @@ public class VarInt {
     // when preserveAllBits is true, then the resulting
     // integer will only be 251 bits in length as 5 bits
     // will be used to encode the length of the integer.
-    public static byte[] writeCompactUint256(BigInteger integer, boolean preserveAllBits) throws IOException, WolkenException {
+    public static byte[] writeCompactUint256(BigInteger integer, boolean preserveAllBits) throws IOException, AdeniumException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         writeCompactUint256(integer, preserveAllBits, outputStream);
         return outputStream.toByteArray();
     }
 
-    public static void writeCompactUint256(BigInteger integer, boolean preserveAllBits, OutputStream stream) throws WolkenException, IOException {
+    public static void writeCompactUint256(BigInteger integer, boolean preserveAllBits, OutputStream stream) throws AdeniumException, IOException {
         if (integer.bitLength() > 256) {
-            throw new WolkenException("writeCompactUint256 only allows up to  2^256 bits.");
+            throw new AdeniumException("writeCompactUint256 only allows up to  2^256 bits.");
         }
 
         if (preserveAllBits) {
@@ -480,7 +480,7 @@ public class VarInt {
         }
     }
 
-    public static BigInteger readCompactUint256(boolean preserveAllBits, InputStream stream) throws WolkenException, IOException {
+    public static BigInteger readCompactUint256(boolean preserveAllBits, InputStream stream) throws AdeniumException, IOException {
         return new BigInteger(1, readCompactUint256Bytes(preserveAllBits, stream));
     }
 

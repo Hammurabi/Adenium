@@ -4,7 +4,7 @@ import io.adenium.papaya.runtime.PapayaCallable;
 import io.adenium.papaya.runtime.PapayaObject;
 import io.adenium.exceptions.PapayaException;
 import io.adenium.exceptions.PapayaIllegalAccessException;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.papaya.runtime.PapayaHandler;
 import io.adenium.utils.ByteArray;
 
@@ -86,7 +86,7 @@ public class Struct {
         return lineInfo;
     }
 
-    public void compile(PapayaApplication application) throws WolkenException {
+    public void compile(PapayaApplication application) throws AdeniumException {
         for (PapayaFunction function : getFunctions()) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 //            CompilationScope compilationScope = new CompilationScope(outputStream, application, node);

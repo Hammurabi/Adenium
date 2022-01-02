@@ -1,7 +1,7 @@
 package io.adenium.network;
 
 import io.adenium.encoders.Base16;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import org.json.JSONObject;
 import io.adenium.core.Context;
@@ -63,7 +63,7 @@ public class VersionInformation extends SerializableI {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         this.version = VarInt.readCompactUInt32(false, stream);
         this.services = Utils.readLong(stream);
         this.timestamp = Utils.readLong(stream);
@@ -76,11 +76,11 @@ public class VersionInformation extends SerializableI {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         try {
             return (Type) new VersionInformation();
         } catch (UnknownHostException e) {
-            throw new WolkenException(e);
+            throw new AdeniumException(e);
         }
     }
 

@@ -12,7 +12,7 @@ import io.adenium.core.Context;
 import io.adenium.crypto.CryptoLib;
 import io.adenium.crypto.Key;
 import io.adenium.crypto.Signature;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.Assertions;
 import io.adenium.utils.HashUtil;
@@ -50,21 +50,21 @@ public class RecoverableSignature extends Signature {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         stream.write(v);
         stream.write(r);
         stream.write(s);
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         checkFullyRead(stream.read(v), 1);
         checkFullyRead(stream.read(r), 32);
         checkFullyRead(stream.read(s), 32);
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new RecoverableSignature();
     }
 
@@ -87,21 +87,21 @@ public class RecoverableSignature extends Signature {
     }
 
     @Override
-    public Key recover(byte originalMessage[]) throws WolkenException {
+    public Key recover(byte originalMessage[]) throws AdeniumException {
         Assertions.assertTrue(r != null && r.length == 32, "r must be 32 bytes in length");
         Assertions.assertTrue(s != null && s.length == 32, "s must be 32 bytes in length");
 
         int header = Byte.toUnsignedInt(v[0]) & 0xFF;
 
         if (header < 53 || header > 128) {
-            throw new WolkenException("header byte out of range: " + header);
+            throw new AdeniumException("header byte out of range: " + header);
         }
 
         ECSig sig = new ECSig(new BigInteger(1, r), new BigInteger(1, s));
         Key result = CryptoLib.recoverFromSignature(v[0] - 53, sig, HashUtil.sha256d(originalMessage));
 
         if (result == null) {
-            throw new WolkenException("could not recover public key.");
+            throw new AdeniumException("could not recover public key.");
         }
 
         return result;

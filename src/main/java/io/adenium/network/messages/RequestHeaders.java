@@ -3,7 +3,7 @@ package io.adenium.network.messages;
 import io.adenium.core.Block;
 import io.adenium.core.BlockHeader;
 import io.adenium.core.Context;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.network.Message;
 import io.adenium.network.Node;
 import io.adenium.network.ResponseMetadata;
@@ -112,7 +112,7 @@ public class RequestHeaders extends Message {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new RequestHeaders(getVersion(), headers);
     }
 

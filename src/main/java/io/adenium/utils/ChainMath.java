@@ -1,7 +1,7 @@
 package io.adenium.utils;
 
 import io.adenium.encoders.Base16;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.core.BlockHeader;
 import io.adenium.core.Context;
 
@@ -67,10 +67,10 @@ public class ChainMath {
         return true;
     }
 
-    public static byte[] targetFromBits(byte bits[]) throws WolkenException {
+    public static byte[] targetFromBits(byte bits[]) throws AdeniumException {
         int length = Byte.toUnsignedInt(bits[0]);
         if (length > 32)
-            throw new WolkenException("invalid target bits '" + Base16.encode(bits) + "'.");
+            throw new AdeniumException("invalid target bits '" + Base16.encode(bits) + "'.");
 
         byte target[] = Utils.fillArray(new byte[length], (byte) 255);
 
@@ -81,7 +81,7 @@ public class ChainMath {
         return target;
     }
 
-    public static byte[] targetFromBits256(byte bits[]) throws WolkenException {
+    public static byte[] targetFromBits256(byte bits[]) throws AdeniumException {
         byte target[] = targetFromBits(bits);
 
         if (target.length < 32) {
@@ -117,7 +117,7 @@ public class ChainMath {
         return Context.getInstance().getContextParams().getMaxReward() / d;
     }
 
-    public static BigInteger getTotalWork(byte[] bits) throws WolkenException {
+    public static BigInteger getTotalWork(byte[] bits) throws AdeniumException {
         return x256.divide(new BigInteger(1, targetFromBits(bits)));
     }
 

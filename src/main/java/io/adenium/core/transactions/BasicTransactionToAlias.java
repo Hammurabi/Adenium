@@ -3,11 +3,10 @@ package io.adenium.core.transactions;
 import io.adenium.core.*;
 import io.adenium.crypto.ec.RecoverableSignature;
 import org.json.JSONObject;
-import org.wolkenproject.core.*;
 import io.adenium.core.events.DepositFundsEvent;
 import io.adenium.core.events.WithdrawFundsEvent;
 import io.adenium.crypto.Signature;
-import io.adenium.exceptions.WolkenException;
+import io.adenium.exceptions.AdeniumException;
 import io.adenium.serialization.SerializableI;
 import io.adenium.utils.VarInt;
 
@@ -95,7 +94,7 @@ public class BasicTransactionToAlias extends Transaction {
             }
 
             return TransactionCode.ValidTransaction;
-        } catch (WolkenException e) {
+        } catch (AdeniumException e) {
             e.printStackTrace();
         }
 
@@ -103,7 +102,7 @@ public class BasicTransactionToAlias extends Transaction {
     }
 
     @Override
-    public Address getSender() throws WolkenException {
+    public Address getSender() throws AdeniumException {
         return Address.fromKey(signature.recover(asByteArray()));
     }
 
@@ -138,7 +137,7 @@ public class BasicTransactionToAlias extends Transaction {
     }
 
     @Override
-    public void getStateChange(Block block, BlockStateChange stateChange) throws WolkenException {
+    public void getStateChange(Block block, BlockStateChange stateChange) throws AdeniumException {
         stateChange.addEvent(new DepositFundsEvent(getRecipient().getRaw(), value));
         stateChange.addEvent(new WithdrawFundsEvent(getSender().getRaw(), value));
     }
@@ -149,12 +148,12 @@ public class BasicTransactionToAlias extends Transaction {
     }
 
     @Override
-    protected void setSignature(Signature signature) throws WolkenException {
+    protected void setSignature(Signature signature) throws AdeniumException {
         if (signature instanceof RecoverableSignature) {
             this.signature = (RecoverableSignature) signature;
         }
 
-        throw new WolkenException("invalid signature type '" + signature.getClass() + "'.");
+        throw new AdeniumException("invalid signature type '" + signature.getClass() + "'.");
     }
 
     @Override
@@ -163,7 +162,7 @@ public class BasicTransactionToAlias extends Transaction {
     }
 
     @Override
-    public void write(OutputStream stream) throws IOException, WolkenException {
+    public void write(OutputStream stream) throws IOException, AdeniumException {
         VarInt.writeCompactUInt64(alias, false, stream);
         VarInt.writeCompactUInt64(value, false, stream);
         VarInt.writeCompactUInt64(fee, false, stream);
@@ -172,7 +171,7 @@ public class BasicTransactionToAlias extends Transaction {
     }
 
     @Override
-    public void read(InputStream stream) throws IOException, WolkenException {
+    public void read(InputStream stream) throws IOException, AdeniumException {
         alias   = VarInt.readCompactUInt64(false, stream);
         value   = VarInt.readCompactUInt64(false, stream);
         fee     = VarInt.readCompactUInt64(false, stream);
@@ -181,7 +180,7 @@ public class BasicTransactionToAlias extends Transaction {
     }
 
     @Override
-    public <Type extends SerializableI> Type newInstance(Object... object) throws WolkenException {
+    public <Type extends SerializableI> Type newInstance(Object... object) throws AdeniumException {
         return (Type) new BasicTransaction();
     }
 

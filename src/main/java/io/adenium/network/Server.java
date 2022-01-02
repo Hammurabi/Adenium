@@ -1,6 +1,6 @@
 package io.adenium.network;
 
-import io.adenium.exceptions.WolkenTimeoutException;
+import io.adenium.exceptions.AdeniumTimeoutException;
 import io.adenium.network.messages.VersionMessage;
 import io.adenium.core.Context;
 import io.adenium.utils.Logger;
@@ -300,7 +300,7 @@ public class Server implements Runnable {
                         return response.getMessage();
                     }
                 }
-            } catch (WolkenTimeoutException e) {
+            } catch (AdeniumTimeoutException e) {
             }
         }
 
