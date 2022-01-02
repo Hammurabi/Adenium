@@ -26,7 +26,7 @@ public class Start {
         AnsiConsole.systemInstall();
 
         Options options = new Options();
-        options.addOption("dir", true, "set the main directory for wolken, otherwise uses the default application directory of the system.");
+        options.addOption("dir", true, "set the main directory for Adenium, otherwise uses the default application directory of the system.");
         options.addOption("enable_fullnode", true, "set the node to a full node.");
         options.addOption("enable_verbose", true, "enable verbose mode to get data logged to the console.");
         options.addOption("enable_testnet", true, "set the testnet to enabled/disabled.");
@@ -89,7 +89,7 @@ public class Start {
             System.exit(0);
         }
 
-        mainDirectory = mainDirectory.newFile("Wolken");
+        mainDirectory = mainDirectory.newFile("Adenium");
         if (!mainDirectory.exists())
         {
             mainDirectory.makeDirectory();
