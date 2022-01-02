@@ -39,7 +39,8 @@ pause
 echo.
 
 echo error^: java not installed
-echo please install the latest version from https://jdk.java.net/
+echo downloading java
+goto noJDK
 pause
 
 :installMavenTask
