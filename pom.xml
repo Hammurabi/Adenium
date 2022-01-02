@@ -26,7 +26,7 @@
 <!--                        <manifest>-->
 <!--                            <addClasspath>true</addClasspath>-->
 <!--                            <classpathPrefix>lib/</classpathPrefix>-->
-<!--                            <mainClass>org.wolkenproject.Start</mainClass>-->
+<!--                            <mainClass>Start</mainClass>-->
 <!--                        </manifest>-->
 <!--                    </archive>-->
 <!--                </configuration>-->
@@ -63,7 +63,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.wolkenproject.Start</mainClass>
+                            <mainClass>io.adenium.Start</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
