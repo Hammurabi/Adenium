@@ -1,21 +1,57 @@
-MIT License
+Adenium License
 
-Copyright (c) 2021 Hammurabi
+Copyright © Abdullah Al-Hindawi, 2024. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Purpose
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This license governs the use of the software project known as “Adenium” (collectively referred to as the “Software”), including all associated source code, compiled binaries, documentation, and related materials (together, the “Source”).
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+The Software and Source are made publicly viewable and compilable for research, academic study, security review, and verification of network integrity.
+This license does not grant permission for copying, redistribution, modification, or the creation of derivative works.
+
+2. License Grant
+
+You are granted a limited, non-exclusive, non-transferable, and revocable license to:
+
+View, study, and analyze the Source of the Software.
+
+Compile and run the Software for personal, non-commercial purposes only.
+
+No other rights, licenses, or permissions are granted, whether express or implied.
+
+3. Restrictions
+
+Without prior written permission from the copyright holder, you may not, including without limitation:
+
+Copy, modify, reproduce, or distribute the Software or Source, in whole or in part.
+
+Fork, rebrand, repackage, or reimplement the Software or Source or any of its proprietary mechanisms, designs, or protocols.
+
+Use the Software or Source in any commercial, academic, institutional, or public project.
+
+Host, sell, or redistribute compiled binaries or modified versions.
+
+Claim ownership, authorship, or any form of endorsement or affiliation with Adenium.
+
+4. Intellectual Property
+
+All ideas, algorithms, cryptographic mechanisms, network protocols, and other innovations contained within the Software and Source are the exclusive intellectual property of the copyright holder.
+Unauthorized reproduction, derivation, redistribution, or commercial use constitutes a violation of this license and applicable copyright law.
+
+5. Liability and Warranty Disclaimer
+
+The Software and Source are provided “as is”, without any warranties, express or implied; including but not limited to merchantability, fitness for a particular purpose, or non-infringement.
+The author is not liable for any damages, losses, data corruption, compilation errors, or other issues arising from the use or misuse of the Software or Source.
+
+6. Enforcement and Penalties
+
+In the event of violation of this license, including unauthorized use, redistribution, modification, forking, or reimplementation of the Software or Source, the copyright holder reserves the right to pursue legal action and claim damages. Such damages may include monetary compensation up to the equivalent value of one (1) kilogram of gold per day of continuing infringement, subject to determination by a Swiss court.
+Each day of noncompliance may be considered a separate day of infringement for the purposes of calculating damages.
+
+7. Jurisdiction
+
+This license shall be governed by and construed in accordance with the laws of Switzerland, and any disputes arising from or relating to this license shall be subject to the exclusive jurisdiction of the courts located in Switzerland.
+
+8. Acceptance
+
+By accessing, viewing, compiling, or running the Software or Source, you acknowledge that you have read, understood, and agreed to be bound by the terms of this license.
