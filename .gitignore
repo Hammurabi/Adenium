@@ -29,3 +29,7 @@ tools/*
 .DS_Store
 gui/package.json
 *.pyc
+
+build/*
+.vscode/*
+.DS_Store
