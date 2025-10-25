@@ -33,3 +33,5 @@ gui/package.json
 build/*
 .vscode/*
 .DS_Store
+
+rpc/keys.json
