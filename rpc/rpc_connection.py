@@ -15,9 +15,23 @@ class rpc_connection:
         self.token   = ''
         self.scheme  = 'http'
     def send_request(self, request, arguments):
-        url = self.scheme + "://" + self.ip + ":" + self.port + "/api?" + self.package_query(request, arguments)
+        # url = self.scheme + "://" + self.ip + ":" + self.port + "/api/get?" + self.package_query(request, arguments)
+        # try:
+        #     return self.to_json(requests.get(url, allow_redirects=True))
+        # except:
+        #     return rpc_noconnection('failed to send request to server.'), ''
+        arguments['request'] = request
+        return self.post_request(arguments)
+    def post_request(self, arguments, data_type='text'):
+        url = self.scheme + "://" + self.ip + ":" + self.port + "/api?dtype=" + data_type
         try:
-            return self.to_json(requests.get(url, allow_redirects=True))
+            return self.to_json(requests.post(url, arguments))
+        except:
+            return rpc_noconnection('failed to send request to server.'), ''
+    def pipe_request(self, request, arguments, data, data_type='bin'):
+        url = self.scheme + "://" + self.ip + ":" + self.port + "/api?dtype=" + data_type + "&" + package_query(request, arguments)
+        try:
+            return self.to_json(requests.post(url, data=arguments, headers={'Content-Type': 'application/octet-stream'}))
         except:
             return rpc_noconnection('failed to send request to server.'), ''
     def to_json(self, response):

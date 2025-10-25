@@ -19,6 +19,9 @@ import cmd_walletfromdump
 import cmd_signtransaction
 import cmd_broadcasttransaction
 import cmd_gettransaction
+import cmd_broadcastblock
+import cmd_createnextblock
+import cmd_submitnonce
 
 # registers all commands to the command manager
 def register_all(cmdManager):
@@ -58,4 +61,12 @@ def register_all(cmdManager):
     cmdManager.register('broadcasttransaction', cmd_broadcasttransaction.parse)
     # this command retrieves a transaction using it's hash (txid)
     cmdManager.register('gettransaction', cmd_gettransaction.parse)
+
+    # mining commands
+    # this command broadcasts a block to the network (block)
+    cmdManager.register('broadcastblock', cmd_broadcastblock.parse)
+    # this command generates the next block and sends the header back for mining (address)
+    cmdManager.register('createnextblock', cmd_createnextblock.parse)
+    # this command submits the nonce to the server and checks for valid proof of work then broadcasts the block (nonce)
+    cmdManager.register('submitnonce', cmd_submitnonce.parse)
 

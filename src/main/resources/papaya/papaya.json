@@ -1,0 +1,376 @@
+{
+  "tokens": [
+    {
+      "for": [
+        "for"
+      ]
+    },
+    {
+      "while": [
+        "while"
+      ]
+    },
+    {
+      "break": [
+        "break"
+      ]
+    },
+    {
+      "continue": [
+        "continue"
+      ]
+    },
+    {
+      "pass": [
+        "pass"
+      ]
+    },
+    {
+      "return": [
+        "return"
+      ]
+    },
+    {
+      "fn": [
+        "fn"
+      ]
+    },
+    {
+      "module": [
+        "module"
+      ]
+    },
+    {
+      "contract": [
+        "contract"
+      ]
+    },
+    {
+      "class": [
+        "class"
+      ]
+    },
+    {
+      "struct": [
+        "struct"
+      ]
+    },
+    {
+      "inheritance": [
+        "extends",
+        "implements"
+      ]
+    },
+    {
+      "let": [
+        "let"
+      ]
+    },
+    {
+      "access_mod": [
+        "public",
+        "private",
+        "protected",
+        "const"
+      ]
+    },
+    {
+      "fun_accmd": [
+        "const",
+        "value"
+      ]
+    },
+    {
+      ",": [
+        "\\,"
+      ]
+    },
+    {
+      ".": [
+        "\\."
+      ]
+    },
+    {
+      "->": [
+        "\\-\\>"
+      ]
+    },
+    {
+      "=>": [
+        "\\=\\>"
+      ]
+    },
+    {
+      "int": [
+        "\\d+"
+      ]
+    },
+    {
+      "dec": [
+        "\\d+\\.\\d+",
+        "\\d+\\.",
+        "\\.\\d+"
+      ]
+    },
+    {
+      "++": [
+        "\\+\\+"
+      ]
+    },
+    {
+      "--": [
+        "\\-\\-"
+      ]
+    },
+    {
+      "!": [
+        "\\!"
+      ]
+    },
+    {
+      "=": [
+        "\\="
+      ]
+    },
+    {
+      "+": [
+        "\\+"
+      ]
+    },
+    {
+      "-": [
+        "\\-"
+      ]
+    },
+    {
+      "*": [
+        "\\*"
+      ]
+    },
+    {
+      "/": [
+        "\\/"
+      ]
+    },
+    {
+      "%": [
+        "\\%"
+      ]
+    },
+    {
+      "**": [
+        "\\*\\*"
+      ]
+    },
+    {
+      "^": [
+        "\\^"
+      ]
+    },
+    {
+      "&": [
+        "\\&"
+      ]
+    },
+    {
+      "|": [
+        "\\|"
+      ]
+    },
+    {
+      "~": [
+        "\\~"
+      ]
+    },
+    {
+      "&&": [
+        "\\&\\&"
+      ]
+    },
+    {
+      "||": [
+        "\\|\\|"
+      ]
+    },
+    {
+      "<<": [
+        "\\<\\<"
+      ]
+    },
+    {
+      ">>": [
+        "\\>\\>"
+      ]
+    },
+    {
+      ">>>": [
+        "\\>\\>\\>"
+      ]
+    },
+    {
+      ">": [
+        "\\>"
+      ]
+    },
+    {
+      "<": [
+        "\\<"
+      ]
+    },
+    {
+      "!=": [
+        "\\!\\="
+      ]
+    },
+    {
+      "==": [
+        "\\=\\="
+      ]
+    },
+    {
+      "+=": [
+        "\\+\\="
+      ]
+    },
+    {
+      "-=": [
+        "\\-\\="
+      ]
+    },
+    {
+      "*=": [
+        "\\*\\="
+      ]
+    },
+    {
+      "/=": [
+        "\\/\\="
+      ]
+    },
+    {
+      "%=": [
+        "\\%\\="
+      ]
+    },
+    {
+      "**=": [
+        "\\*\\*\\="
+      ]
+    },
+    {
+      "^=": [
+        "\\^\\="
+      ]
+    },
+    {
+      "&=": [
+        "\\&\\="
+      ]
+    },
+    {
+      "|=": [
+        "\\|\\="
+      ]
+    },
+    {
+      "&&=": [
+        "\\&\\&\\="
+      ]
+    },
+    {
+      "||=": [
+        "\\|\\|\\="
+      ]
+    },
+    {
+      "<<=": [
+        "\\<\\<\\="
+      ]
+    },
+    {
+      ">>=": [
+        "\\>\\>\\="
+      ]
+    },
+    {
+      ">>>=": [
+        "\\>\\>\\>\\="
+      ]
+    },
+    {
+      ">=": [
+        ">\\="
+      ]
+    },
+    {
+      "<=": [
+        "<\\="
+      ]
+    },
+    {
+      "(": [
+        "\\("
+      ]
+    },
+    {
+      ")": [
+        "\\)"
+      ]
+    },
+    {
+      "[": [
+        "\\["
+      ]
+    },
+    {
+      "]": [
+        "\\]"
+      ]
+    },
+    {
+      "{": [
+        "\\{"
+      ]
+    },
+    {
+      "}": [
+        "\\}"
+      ]
+    },
+    {
+      "ident": [
+        "([A-z]|\\_)+\\d*"
+      ]
+    }
+  ],
+  "grammar": [
+    {"struct_keyword":[["class","struct","module","contract"]]},
+    {"structure":[["struct_keyword","ident","{","members","}"]]},
+    {"member":[["ident","ident","assignment"],["fn","ident","(","fn_args",")","{","statements","}"]]},
+    {"members":[["member","members"],[]]},
+    {"assignment":[[],["=","expression"]]},
+    {"fn_arg":[[],["expression"]]},
+    {"fn_arg_tail":[[],[",","fn_args"]]},
+    {"fn_args":[[],["fn_arg","fn_arg_tail"]]},
+    {"exp":[["number"],["ident"],["ident","(","fn_call_args",")"],["(","exp",")"]]},
+    {"expression*":[[],["expression"]]},
+    {"expression":[["operator"]]},
+
+    {"operator":[["lor"]]},
+    {"lor":[["land","||","lor"],["exp"]]},
+    {"land":[["or","&&","land"],["exp"]]},
+    {"or":[["xor","|","or"],["exp"]]},
+    {"xor":[["and","^","xor"],["exp"]]},
+    {"and":[["equality_operator","&","and"],["exp"]]},
+    {"equality_operator":[["comparison","==","equality_operator"],["comparison","!=","equality_operator"],["exp"]]},
+    {"comparison":[["shift","<","comparison"],["shift",">","comparison"],["shift",">=","comparison"],["shift","<=","comparison"],["exp"]]},
+    {"shift":[["addition",">>>","shift"],["addition",">>","shift"],["addition","<<","shift"],["exp"]]},
+    {"addition":[["pow","+","addition"],["pow","-","addition"],["exp"]]},
+    {"pow":[["multiply","+","pow"],["multiply","-","pow"],["exp"]]},
+    {"multiply":[["exp","*","multiply"],["exp","/","multiply"],["exp","%","multiply"],["exp"]]},
+    {"prefix":[["--","exp"],["++","exp"],["-","exp"],["!","exp"],["~","exp"],["exp"]]},
+    {"suffix":[["exp",".","member_access"],["exp","->","member_access"],["exp","++"],["exp","--"],["exp","[","expression","]"],["exp"]]},
+    {"statements":[[],["statement","statements"]]},
+    {"statement":[["expression"],["member"]]}
+  ]
+}

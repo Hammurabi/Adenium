@@ -1,4 +1,4 @@
-# Wolken RPC
+# Adenium RPC
 ## commands
 | Command | Arguments | Optional Arguments | Description |
 | ------ | ------ | ------ | ------ | 

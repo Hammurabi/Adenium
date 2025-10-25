@@ -8,6 +8,8 @@ python --version 2>NUL
 if errorlevel 1 goto errorNoPython
 echo python is installed
 
+pip install requests
+
 java -version 2>NUL
 if errorlevel 1 goto errorNoJava
 echo java is installed
@@ -37,7 +39,8 @@ pause
 echo.
 
 echo error^: java not installed
-echo please install the latest version from https://jdk.java.net/
+echo downloading java
+goto noJDK
 pause
 
 :installMavenTask

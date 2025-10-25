@@ -1,0 +1,28 @@
+class string {
+}
+
+struct address {
+    address_base a;
+}
+
+struct address_base {
+    int g;
+}
+
+module Integer {
+    class Unsigned32 {
+    }
+
+    class Unsigned64 {
+    }
+
+    class Unsigned128 {
+    }
+
+    class Unsigned256 {
+    }
+
+    fn parse(string value) {
+        return 0;
+    }
+}
