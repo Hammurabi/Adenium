@@ -1,4 +1,4 @@
-# 🌸 PyAdenium 1/32 🌸
+# 🌸 Adenium 1/32 🌸
 Welcome to Adenium
 
 Adenium is a next-generation blockchain network designed to be fast, secure, and reliable. It allows developers to build decentralized applications and services in a way that’s deterministic, everything behaves predictably and provable, so you can always verify that what happened on the network.
