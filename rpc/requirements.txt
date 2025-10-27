@@ -1,0 +1,8 @@
+requests==2.32.3
+bitarray==3.7.2
+cryptography==46.0.3
+aiortc==1.13.0
+colorama==0.4.6
+aioice==0.10.1
+av==14.4.0
+pylibsrtp==0.12.0
