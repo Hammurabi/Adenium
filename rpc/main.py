@@ -587,7 +587,7 @@ class RTCNode:
                     "Sender": self.node.id,
                     "Recipient": peer,
                     "Candidate": encrypted,
-                    'timestamp': time.monotonic()
+                    'Timestamp': time.monotonic()
                 }, retry=10))
 
         offer = await pc.createOffer()
@@ -599,7 +599,7 @@ class RTCNode:
             "Sender": self.node.id,
             "Recipient": peer,
             "Offer": encrypted,
-            'timestamp': time.monotonic()
+            'Timestamp': time.monotonic()
         }, retry=10))
         if verbose:
             print(f"[*] Offer sent to {peer}", flush=True)
@@ -655,7 +655,7 @@ class RTCNode:
                     "Sender": self.node.id,
                     "Recipient": peer,
                     "Candidate": encrypted,
-                    'timestamp': time.monotonic()
+                    'Timestamp': time.monotonic()
                 }, retry=10))
 
         await pc.setRemoteDescription(RTCSessionDescription(sdp=offer_sdp, type="offer"))
@@ -668,7 +668,7 @@ class RTCNode:
             "Sender": self.node.id,
             "Recipient": peer,
             "Answer": encrypted,
-            'timestamp': time.monotonic()
+            'Timestamp': time.monotonic()
         }, retry=10))
 
         if verbose:
@@ -990,9 +990,9 @@ class Node:
                 self.dht.add(i)
             return
         elif msg['Type'] == 'Announce':
-            dht_key = msg['content']['id']
-            ip      = msg['content']['ip']
-            port    = msg['content']['port']
+            dht_key = msg['Content']['id']
+            ip      = msg['Content']['ip']
+            port    = msg['Content']['port']
             self.dht.add(dht_key)
             asyncio.create_task(self.connect_udp((ip, int(port))))
         elif msg['Type'] == 'RelayIntent':
@@ -1034,13 +1034,13 @@ class Node:
 
     async def bootstrap(self, protocol, addresses):
         self.protocol = protocol
-        announcement, h = hashcash({'Type': 'Announce', 'content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'timestamp': time.monotonic()})
+        announcement, h = hashcash({'Type': 'Announce', 'Content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'Timestamp': time.monotonic()})
         self.announce = json.dumps(announcement)
         for addr in addresses:
             await self.connect_udp(addr)
 
     def announce_self(self):
-        announcement, h = hashcash({'Type': 'Announce', 'content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'timestamp': time.monotonic()})
+        announcement, h = hashcash({'Type': 'Announce', 'Content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'Timestamp': time.monotonic()})
         self.announce = json.dumps(announcement)
         self.broadcast(self.announce, set())
 
@@ -1195,17 +1195,21 @@ async def main():
     start = time.monotonic()
     last_filter_wipe = time.monotonic()
     last_rtc_wipe = time.monotonic()
+    last_announce = time.monotonic()
+
+    node.ping()
 
     try:
         while True:
             check = time.monotonic()
-            if check - start > 5:
+            if check - start > 10:
                 node.ping()
                 start = check
-                node.announce_self()
-                # print(node.peers, flush=True)
                 if not relay_only:
                     await node.maintain_rtc_channels(max_channels=128)
+            if check - last_announce > 120:
+                node.announce_self()
+                last_announce = check
             if check - last_filter_wipe > 3600:
                 node.clear_filters()
                 last_filter_wipe = check
