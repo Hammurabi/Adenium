@@ -24,7 +24,7 @@ lpc_from = ('0.0.0.0', 2304)
 lpc_to = ('127.0.0.1', 3456)
 verbose = True
 bootstrap_nodes = [
-    ('198.12.86.66', 1152),
+    ('204.44.125.165', 1152),
 ]
 
 
@@ -955,8 +955,8 @@ class Node:
         msg = json.loads(msg)
         if not verify_hashcash(msg):
             return
-        # if verbose:
-        #     print('[*] Received ', msg)
+        if verbose:
+            print('[*] Received ', msg['Type'], ' from ', addr)
         if msg['Type'] == 'Ping':
             pong, _ = hashcash({
                 'Type': 'Pong',
@@ -1008,10 +1008,15 @@ class Node:
 
     async def bootstrap(self, protocol, addresses):
         self.protocol = protocol
-        announcement, h = hashcash({'Type': 'Announce', 'content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}})
+        announcement, h = hashcash({'Type': 'Announce', 'content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'timestamp': time.monotonic()})
         self.announce = json.dumps(announcement)
         for addr in addresses:
             await self.connect_udp(addr)
+
+    def announce_self(self):
+        announcement, h = hashcash({'Type': 'Announce', 'content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'timestamp': time.monotonic()})
+        self.announce = json.dumps(announcement)
+        self.broadcast(self.announce, set())
 
     def clear_filters(self):
         self.rtcnode.filter = ScalableBloomFilter()
@@ -1027,6 +1032,8 @@ class Node:
     def broadcast(self, msg, exclude):
         if not self.filter.seen(msg):
             self.filter.add(msg)
+        # print('[*] Sending ', msg)
+
         for peer in self.peers:
             if peer in exclude:
                 continue
@@ -1152,6 +1159,8 @@ async def main():
             if check - start > 5:
                 node.ping()
                 start = check
+                node.announce_self()
+                print(node.peers)
                 await node.maintain_rtc_channels(max_channels=128)
             if check - last_filter_wipe > 3600:
                 node.clear_filters()
