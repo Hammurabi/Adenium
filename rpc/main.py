@@ -420,7 +420,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
     def connection_made(self, transport):
         self.transport = transport
         if verbose:
-            print("[*] UDP connection ready")
+            print("[*] UDP connection ready", flush=True)
 
     def datagram_received(self, data, addr):
         message = data.decode()
@@ -429,11 +429,11 @@ class UDPProtocol(asyncio.DatagramProtocol):
 
     def error_received(self, exc):
         if verbose:
-            print(f"Error received: {exc}")
+            print(f"Error received: {exc}", flush=True)
 
     def connection_lost(self, exc):
         if verbose:
-            print("[-] UDP connection closed")
+            print("[-] UDP connection closed", flush=True)
 
     # send message method
     def send(self, message, addr):
@@ -488,7 +488,7 @@ async def start_lpc(node):
     lpc.set_protocol(protocol)
     node.set_lpc(lpc)
     if verbose:
-        print('[*] LPC Listening on ', lpc_from)
+        print('[*] LPC Listening on ', lpc_from, flush=True)
 
     try:
         while True:
@@ -516,7 +516,7 @@ class RTCNode:
             return True
         else:
             if verbose:
-                print(f"[!] Cannot send to {peer}: channel not open")
+                print(f"[!] Cannot send to {peer}: channel not open", flush=True)
             return False
         
     def broadcast(self, msg, exclude=set()):
@@ -532,7 +532,7 @@ class RTCNode:
                 channel.send(msg)
             else:
                 if verbose:
-                    print(f"[!] Skipping {peer}: channel not open")
+                    print(f"[!] Skipping {peer}: channel not open", flush=True)
 
     async def rtc_offer(self, me, peer):
         if self.node.relay_only:
@@ -561,13 +561,13 @@ class RTCNode:
                 last_filter_wipe = now_time
             bloom_filter.add(message)
             if verbose:
-                print(f"[*] {label} Received {hashlib.sha256(message).hexdigest()} from {peer}")
+                print(f"[*] {label} Received {hashlib.sha256(message).hexdigest()} from {peer}", flush=True)
             asyncio.create_task(self.node.receive_message(channel, label, peer, message))
             # self.node.receive_message(channel, label, peer, message)
         @channel.on("open")
         def on_open():
             if verbose:
-                print(f"[*] DataChannel to {peer} is open and ready for messages.")
+                print(f"[*] DataChannel to {peer} is open and ready for messages.", flush=True)
             asyncio.create_task(self.node.ping_msg(channel))
 
         # Handle ICE candidates found locally
@@ -599,7 +599,7 @@ class RTCNode:
             "Offer": encrypted
         }))
         if verbose:
-            print(f"[*] Offer sent to {peer}")
+            print(f"[*] Offer sent to {peer}", flush=True)
 
         await self.keep_alive(pc, peer)
 
@@ -618,7 +618,7 @@ class RTCNode:
         @pc.on("datachannel")
         def on_datachannel(channel):
             if verbose:
-                print(f"[*] Incoming channel from {peer}: {channel.label}")
+                print(f"[*] Incoming channel from {peer}: {channel.label}", flush=True)
                 asyncio.create_task(self.node.ping_msg(channel))
             self.channels[peer] = channel
 
@@ -633,7 +633,7 @@ class RTCNode:
                     last_filter_wipe = now_time
                 bloom_filter.add(message)
                 if verbose:
-                    print(f"[*] {label} Received {hashlib.sha256(message).hexdigest()} from {peer}")
+                    print(f"[*] {label} Received {hashlib.sha256(message).hexdigest()} from {peer}", flush=True)
                 # print(f"[*] {label} Received {message} from {peer}")
                 asyncio.create_task(self.node.receive_message(channel, label, peer, message))
 
@@ -667,7 +667,7 @@ class RTCNode:
         }))
 
         if verbose:
-            print(f"[*] Answer sent to {peer}")
+            print(f"[*] Answer sent to {peer}", flush=True)
 
         await self.keep_alive(pc, peer)
 
@@ -677,7 +677,7 @@ class RTCNode:
         @pc.on("connectionstatechange")
         def on_state_change():
             if verbose:
-                print(f"[{peer}] Connection state: {pc.connectionState}")
+                print(f"[{peer}] Connection state: {pc.connectionState}", flush=True)
             if pc.connectionState in ("failed", "closed"):
                 done.set()
                 self.channels.pop(peer, None)
@@ -691,7 +691,7 @@ class RTCNode:
                         await self.node.ping_msg(channel)
                     except Exception as e:
                         if verbose:
-                            print(f"[!] Keep-alive ping failed for {peer}: {e}")
+                            print(f"[!] Keep-alive ping failed for {peer}: {e}", flush=True)
                             traceback.print_exc()
                             
                 await asyncio.sleep(10)  # every 5s
@@ -702,7 +702,7 @@ class RTCNode:
             # If still not connected, close
             if pc.connectionState != "connected":
                 if verbose:
-                    print(f"[!] Connection to {peer} timed out after {timeout} seconds")
+                    print(f"[!] Connection to {peer} timed out after {timeout} seconds", flush=True)
                 if pc.connectionState not in ("closed", "failed"):
                     await pc.close()
                 self.channels.pop(peer, None)
@@ -718,7 +718,7 @@ class RTCNode:
             sdpMid=candidate["sdpMid"],
             sdpMLineIndex=candidate["sdpMLineIndex"],
             candidate=candidate["candidate"])
-        print('[*] Received ICE Candidate from peer ', peer)
+        print('[*] Received ICE Candidate from peer ', peer, flush=True)
         await pc.addIceCandidate(candidate)
 
     async def cancel_connection(self, pc):
@@ -733,16 +733,16 @@ class RTCNode:
                         RTCSessionDescription(sdp="", type="rollback")
                     )
                     if verbose:
-                        print("[!] Rolled back negotiation.")
+                        print("[!] Rolled back negotiation.", flush=True)
                 except Exception as e:
                     if verbose:
-                        print(f"[!] Rollback failed or not supported: {e}")
+                        print(f"[!] Rollback failed or not supported: {e}", flush=True)
 
             # Step 2: Gracefully close peer connection
             if pc.connectionState not in ("closed",):
                 await pc.close()
                 if verbose:
-                    print("[!] Peer connection closed.")
+                    print("[!] Peer connection closed.", flush=True)
 
             # Step 3: Kill all ICE transports and STUN timers manually
             for trans in getattr(pc, "_transceivers", []):
@@ -758,11 +758,11 @@ class RTCNode:
                             conn._transactions.clear()
 
             if verbose:
-                print("[!] All ICE/STUN transactions cancelled cleanly.")
+                print("[!] All ICE/STUN transactions cancelled cleanly.", flush=True)
 
         except Exception as e:
             if verbose:
-                print(f"[!] Error while cancelling connection: {e}")
+                print(f"[!] Error while cancelling connection: {e}", flush=True)
 
 
 
@@ -825,7 +825,7 @@ class Node:
         if intent == "Offer":
             if should_accept_offer(sender, self.id) and active_channels < 200:
                 if verbose:
-                    print(f"[*] Creating RTC offer for {sender} from intent")
+                    print(f"[*] Creating RTC offer for {sender} from intent", flush=True)
                 if self.rtcnode.peer_connections.get(sender):
                     return
                 asyncio.create_task(self.rtcnode.rtc_offer(self.id, sender))
@@ -833,7 +833,7 @@ class Node:
     async def process_offer(self, sender, offer, addr):
         """Called when we receive an SDP offer."""
         if verbose:
-            print(f"[*] Processing offer from {sender}")
+            print(f"[*] Processing offer from {sender}", flush=True)
         pc = self.rtcnode.peer_connections.get(sender)
         if pc:
             if pc.signalingState == "have-local-offer": # already sent an offer
@@ -845,7 +845,7 @@ class Node:
                     await self.rtcnode.rtc_answer(self.id, sender, offer)
                 else:
                     if verbose:
-                        print('[!] Rejected offer from ', sender)
+                        print('[!] Rejected offer from ', sender, flush=True)
                     return
             elif pc.signalingState == "stable":
                 await self.rtcnode.rtc_answer(self.id, sender, offer)
@@ -928,11 +928,11 @@ class Node:
 
             if should_accept_offer(self.id, hd):
                 if verbose:
-                    print(f"[*] Creating RTC intent for {hd}")
+                    print(f"[*] Creating RTC intent for {hd}", flush=True)
                 asyncio.create_task(self.broadcast_intent(hd, 'Offer'))
             else:
                 if verbose:
-                    print(f"[*] Creating RTC offer for {hd}")
+                    print(f"[*] Creating RTC offer for {hd}", flush=True)
                 asyncio.create_task(self.rtcnode.rtc_offer(self.id, hd))
 
     async def broadcast_intent(self, recipient, intent):
@@ -956,7 +956,7 @@ class Node:
         if not verify_hashcash(msg):
             return
         if verbose:
-            print('[*] Received ', msg['Type'], ' from ', addr)
+            print('[*] Received ', msg['Type'], ' from ', addr, flush=True)
         if msg['Type'] == 'Ping':
             pong, _ = hashcash({
                 'Type': 'Pong',
@@ -1011,9 +1011,9 @@ class Node:
         filtered_addresses = []
         for addr in addresses:
             if addr == my_ip:
-                print(f"[!] Removing own address: {addr}")
+                print(f"[!] Removing own address: {addr}", flush=True)
             else:
-                print(f"[+] Keeping address: {addr}")
+                print(f"[+] Keeping address: {addr}", flush=True)
                 filtered_addresses.append(addr)
         addresses = filtered_addresses
 
@@ -1066,25 +1066,25 @@ class Node:
                 # self.rtcnode.broadcast(og, set([peer]))
         except:
             if verbose:
-                print('[!] A corrupt message received')
+                print('[!] A corrupt message received', flush=True)
             traceback.print_exc()
     
     async def ping_msg(self, channel):
         try:
             channel.send(ping_msg_())
         except:
-            print('[!] Could not send PING')
+            print('[!] Could not send PING', flush=True)
     async def pong_msg(self, channel):
         try:
             channel.send(pong_msg_())
         except:
-            print('[!] Could not send PONG')
+            print('[!] Could not send PONG', flush=True)
 
     async def lpc_broadcast(self, peer, content):
         try:
             self.rtcnode.broadcast(pack_relay(content))
         except:
-            print('[!] Could not broadcast MESSAGE')
+            print('[!] Could not broadcast MESSAGE', flush=True)
 
     async def lpc_submit(self, peer, content):
         channel = self.rtcnode.channels.get(peer)
@@ -1092,7 +1092,7 @@ class Node:
             try:
                 channel.send(pack_relay(content))
             except:
-                print('[!] Could not send MESSAGE')
+                print('[!] Could not send MESSAGE', flush=True)
         
 async def main():
     argv = sys.argv[1:]
@@ -1101,7 +1101,7 @@ async def main():
     for arg in argv:
         if arg == 'relay_only':
             relay_only = True
-            print('[*] Starting in RELAY_ONLY mode')
+            print('[*] Starting in RELAY_ONLY mode', flush=True)
 
     
     cwd = os.getcwd()
@@ -1121,7 +1121,7 @@ async def main():
         private_key = x25519.X25519PrivateKey.from_private_bytes(priv_bytes)
         public_key = x25519.X25519PublicKey.from_public_bytes(pub_bytes)
         if verbose:
-            print("[+] Loaded existing node key:", pub_bytes.hex())
+            print("[+] Loaded existing node key:", pub_bytes.hex(), flush=True)
     else:
         private_key = x25519.X25519PrivateKey.generate()
         public_key = private_key.public_key()
@@ -1139,13 +1139,13 @@ async def main():
         with open(key_path, 'w') as f:
             json.dump({'private_key': priv_bytes.hex(), 'public_key': pub_bytes.hex()}, f)
         if verbose:
-            print("[+] Generated new node key:", pub_bytes.hex())
+            print("[+] Generated new node key:", pub_bytes.hex(), flush=True)
 
     
     # create node
     node = Node(private_key, public_key, pub_bytes.hex(), relay_only)
     if verbose:
-        print("[*] Node initialized with ID:", node.id)
+        print("[*] Node initialized with ID:", node.id, flush=True)
 
     loop = asyncio.get_running_loop()
     transport, protocol = await loop.create_datagram_endpoint(
@@ -1153,7 +1153,7 @@ async def main():
         local_addr=listen_on
     )
     if verbose:
-        print('[*] Listening on ', listen_on)
+        print('[*] Listening on ', listen_on, flush=True)
     await node.bootstrap(protocol, bootstrap_nodes)
 
     if not relay_only:
@@ -1170,7 +1170,7 @@ async def main():
                 node.ping()
                 start = check
                 node.announce_self()
-                print(node.peers)
+                print(node.peers, flush=True)
                 if not relay_only:
                     await node.maintain_rtc_channels(max_channels=128)
             if check - last_filter_wipe > 3600:
