@@ -36,3 +36,5 @@ build/*
 
 rpc/keys.json
 rpc/key.json
+rpc/test/*
+rpc/keypair.json
