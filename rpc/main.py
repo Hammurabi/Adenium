@@ -1000,13 +1000,13 @@ class Node:
         self.broadcast(json.dumps(msg), set([addr]))
 
     
-    def connect_udp(self, addr):
+    async def connect_udp(self, addr):
         if addr in self.peers:
             return
         self.protocol.send(self.announce, addr)
         self.peers.add(addr)
 
-    def bootstrap(self, protocol, addresses):
+    async def bootstrap(self, protocol, addresses):
         my_ip = (public_ip, listen_on[1])
         filtered_addresses = []
         for addr in addresses:
@@ -1021,7 +1021,7 @@ class Node:
         announcement, h = hashcash({'Type': 'Announce', 'content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'timestamp': time.monotonic()})
         self.announce = json.dumps(announcement)
         for addr in addresses:
-            self.connect_udp(addr)
+            await self.connect_udp(addr)
 
     def announce_self(self):
         announcement, h = hashcash({'Type': 'Announce', 'content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'timestamp': time.monotonic()})
@@ -1154,7 +1154,7 @@ async def main():
     )
     if verbose:
         print('[*] Listening on ', listen_on)
-    node.bootstrap(protocol, bootstrap_nodes)
+    await node.bootstrap(protocol, bootstrap_nodes)
 
     if not relay_only:
         asyncio.create_task(start_lpc(node))
