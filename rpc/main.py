@@ -786,6 +786,7 @@ class Node:
         self.rtcnode = RTCNode(self)
         self.relay_only = relay_only
         self.lpc = None
+        self.intents = set()
 
     def set_lpc(self, lpc):
         self.lpc = lpc
@@ -927,11 +928,13 @@ class Node:
             if hd in self.rtcnode.tried:
                 continue
 
-            if should_accept_offer(self.id, hd):
+            if should_accept_offer(self.id, hd) and hd not in self.intents:
                 if verbose:
                     print(f"[*] Creating RTC intent for {hd}", flush=True)
+                self.intents.add(hd)
                 asyncio.create_task(self.broadcast_intent(hd, 'Offer'))
-            else:
+            elif hd not in self.intents:
+                self.intents.add(hd)
                 if verbose:
                     print(f"[*] Creating RTC offer for {hd}", flush=True)
                 asyncio.create_task(self.rtcnode.rtc_offer(self.id, hd))
