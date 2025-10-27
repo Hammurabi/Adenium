@@ -1018,16 +1018,6 @@ class Node:
         self.peers.add(addr)
 
     async def bootstrap(self, protocol, addresses):
-        my_ip = (public_ip, listen_on[1])
-        filtered_addresses = []
-        for addr in addresses:
-            if addr == my_ip:
-                print(f"[!] Removing own address: {addr}", flush=True)
-            else:
-                print(f"[+] Keeping address: {addr}", flush=True)
-                filtered_addresses.append(addr)
-        addresses = filtered_addresses
-
         self.protocol = protocol
         announcement, h = hashcash({'Type': 'Announce', 'content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'timestamp': time.monotonic()})
         self.announce = json.dumps(announcement)
@@ -1104,6 +1094,17 @@ class Node:
                 channel.send(pack_relay(content))
             except:
                 print('[!] Could not send MESSAGE', flush=True)
+
+def filter_bootstrap(addresses):
+    my_ip = (public_ip, listen_on[1])
+    filtered_addresses = []
+    for addr in addresses:
+        if addr == my_ip:
+            print(f"[!] Removing own address: {addr}", flush=True)
+        else:
+            print(f"[+] Keeping address: {addr}", flush=True)
+            filtered_addresses.append(addr)
+    return filtered_addresses
         
 async def main():
     argv = sys.argv[1:]
@@ -1158,6 +1159,8 @@ async def main():
     if verbose:
         print("[*] Node initialized with ID:", node.id, flush=True)
 
+    bootstrap = filter_bootstrap(bootstrap_nodes)
+
     loop = asyncio.get_running_loop()
     transport, protocol = await loop.create_datagram_endpoint(
         lambda: UDPProtocol(node, loop),
@@ -1165,7 +1168,7 @@ async def main():
     )
     if verbose:
         print('[*] Listening on ', listen_on, flush=True)
-    await node.bootstrap(protocol, bootstrap_nodes)
+    await node.bootstrap(protocol, bootstrap)
 
     if not relay_only:
         asyncio.create_task(start_lpc(node))
