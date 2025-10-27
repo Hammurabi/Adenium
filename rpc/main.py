@@ -23,7 +23,7 @@ public_ip = requests.get('https://api.ipify.org').text
 listen_on = ('0.0.0.0', 1152)
 lpc_from = ('0.0.0.0', 2304)
 lpc_to = ('127.0.0.1', 3456)
-verbose = True
+verbose = False
 bootstrap_nodes = [
     ('204.44.125.165', 1152),
 ]
@@ -567,8 +567,8 @@ class RTCNode:
             # self.node.receive_message(channel, label, peer, message)
         @channel.on("open")
         def on_open():
-            if verbose:
-                print(f"[*] DataChannel to {peer} is open and ready for messages.", flush=True)
+            # if verbose:
+            print(f"[*] DataChannel to {peer} is open and ready for messages.", flush=True)
             asyncio.create_task(self.node.ping_msg(channel))
 
         # Handle ICE candidates found locally
@@ -588,7 +588,7 @@ class RTCNode:
                     "Recipient": peer,
                     "Candidate": encrypted,
                     'timestamp': time.monotonic()
-                }))
+                }, retry=10))
 
         offer = await pc.createOffer()
         await pc.setLocalDescription(offer)
@@ -600,7 +600,7 @@ class RTCNode:
             "Recipient": peer,
             "Offer": encrypted,
             'timestamp': time.monotonic()
-        }))
+        }, retry=10))
         if verbose:
             print(f"[*] Offer sent to {peer}", flush=True)
 
@@ -620,9 +620,9 @@ class RTCNode:
 
         @pc.on("datachannel")
         def on_datachannel(channel):
-            if verbose:
-                print(f"[*] Incoming channel from {peer}: {channel.label}", flush=True)
-                asyncio.create_task(self.node.ping_msg(channel))
+            # if verbose:
+            print(f"[*] Incoming channel from {peer}: {channel.label}", flush=True)
+            asyncio.create_task(self.node.ping_msg(channel))
             self.channels[peer] = channel
 
             @channel.on("message")
@@ -656,7 +656,7 @@ class RTCNode:
                     "Recipient": peer,
                     "Candidate": encrypted,
                     'timestamp': time.monotonic()
-                }))
+                }, retry=10))
 
         await pc.setRemoteDescription(RTCSessionDescription(sdp=offer_sdp, type="offer"))
         answer = await pc.createAnswer()
@@ -669,7 +669,7 @@ class RTCNode:
             "Recipient": peer,
             "Answer": encrypted,
             'timestamp': time.monotonic()
-        }))
+        }, retry=10))
 
         if verbose:
             print(f"[*] Answer sent to {peer}", flush=True)
@@ -681,8 +681,8 @@ class RTCNode:
 
         @pc.on("connectionstatechange")
         def on_state_change():
-            if verbose:
-                print(f"[{peer}] Connection state: {pc.connectionState}", flush=True)
+            # if verbose:
+            print(f"[{peer}] Connection state: {pc.connectionState}", flush=True)
             if pc.connectionState in ("failed", "closed"):
                 done.set()
                 self.channels.pop(peer, None)
@@ -695,8 +695,8 @@ class RTCNode:
                     try:
                         await self.node.ping_msg(channel)
                     except Exception as e:
+                        print(f"[!] Keep-alive ping failed for {peer}: {e}", flush=True)
                         if verbose:
-                            print(f"[!] Keep-alive ping failed for {peer}: {e}", flush=True)
                             traceback.print_exc()
                             
                 await asyncio.sleep(10)  # every 5s
@@ -706,8 +706,8 @@ class RTCNode:
             await asyncio.sleep(timeout)
             # If still not connected, close
             if pc.connectionState != "connected":
-                if verbose:
-                    print(f"[!] Connection to {peer} timed out after {timeout} seconds", flush=True)
+                # if verbose:
+                print(f"[!] Connection to {peer} timed out after {timeout} seconds", flush=True)
                 if pc.connectionState not in ("closed", "failed"):
                     await pc.close()
                 self.channels.pop(peer, None)
@@ -946,18 +946,19 @@ class Node:
                     print(f"[*] Creating RTC offer for {hd}", flush=True)
                 asyncio.create_task(self.rtcnode.rtc_offer(self.id, hd))
 
-    async def broadcast_intent(self, recipient, intent):
+    async def broadcast_intent(self, recipient, intent, retry=10):
         msg, _ = hashcash({
             'Type': 'RelayIntent',
             'Sender': self.id,
             'Recipient': recipient,
-            'Intent': self.encrypt_message(intent.encode(), recipient)
+            'Intent': self.encrypt_message(intent.encode(), recipient),
+            'Timestamp': time.monotonic()
         })
-        self.broadcast(json.dumps(msg), exclude=set())
+        self.broadcast(json.dumps(msg), exclude=set(), retry=retry)
 
-    async def broadcast_json(self, msg, exclude=set()):
+    async def broadcast_json(self, msg, exclude=set(), retry=5):
         msg, _ = hashcash(msg)
-        self.broadcast(json.dumps(msg), exclude)
+        self.broadcast(json.dumps(msg), exclude, retry=retry)
     
     def on_message(self, msg, addr):
         if self.filter.seen(msg):
@@ -979,6 +980,7 @@ class Node:
                 'Timestamp': time.monotonic()
             })
             self.protocol.send(json.dumps(pong), addr)
+            return
         elif msg['Type'] == 'Pong':
             sample = msg['Sample']
             print('[+] Received Sample: ', sample)
@@ -986,6 +988,7 @@ class Node:
                 if i == self.id:
                     continue
                 self.dht.add(i)
+            return
         elif msg['Type'] == 'Announce':
             dht_key = msg['content']['id']
             ip      = msg['content']['ip']
@@ -1052,12 +1055,12 @@ class Node:
         })
         self.broadcast(json.dumps(ping), exclude=set())
 
-    def broadcast(self, msg, exclude):
+    def broadcast(self, msg, exclude, retry=5):
         if not self.filter.seen(msg):
             self.filter.add(msg)
         # print('[*] Sending ', msg)
 
-        for _ in range(7):
+        for _ in range(retry):
             for peer in self.peers:
                 if peer in exclude:
                     continue
@@ -1120,6 +1123,7 @@ def filter_bootstrap(addresses):
     return filtered_addresses
         
 async def main():
+    global verbose
     argv = sys.argv[1:]
     relay_only = False
 
@@ -1127,7 +1131,9 @@ async def main():
         if arg == 'relay_only':
             relay_only = True
             print('[*] Starting in RELAY_ONLY mode', flush=True)
-
+        elif arg == 'verbose':
+            verbose = True
+            print('[*] Starting in VERBOSE mode', flush=True)
     
     cwd = os.getcwd()
     directory = os.path.join(cwd, 'rpc')
@@ -1145,8 +1151,8 @@ async def main():
                 
         private_key = x25519.X25519PrivateKey.from_private_bytes(priv_bytes)
         public_key = x25519.X25519PublicKey.from_public_bytes(pub_bytes)
-        if verbose:
-            print("[+] Loaded existing node key:", pub_bytes.hex(), flush=True)
+        # if verbose:
+        print("[+] Loaded existing node key:", pub_bytes.hex(), flush=True)
     else:
         private_key = x25519.X25519PrivateKey.generate()
         public_key = private_key.public_key()
@@ -1163,14 +1169,14 @@ async def main():
 
         with open(key_path, 'w') as f:
             json.dump({'private_key': priv_bytes.hex(), 'public_key': pub_bytes.hex()}, f)
-        if verbose:
-            print("[+] Generated new node key:", pub_bytes.hex(), flush=True)
+        # if verbose:
+        print("[+] Generated new node key:", pub_bytes.hex(), flush=True)
 
     
     # create node
     node = Node(private_key, public_key, pub_bytes.hex(), relay_only)
-    if verbose:
-        print("[*] Node initialized with ID:", node.id, flush=True)
+    # if verbose:
+    print("[*] Node initialized with ID:", node.id, flush=True)
 
     bootstrap = filter_bootstrap(bootstrap_nodes)
 
@@ -1179,8 +1185,8 @@ async def main():
         lambda: UDPProtocol(node, loop),
         local_addr=listen_on
     )
-    if verbose:
-        print('[*] Listening on ', listen_on, flush=True)
+    # if verbose:
+    print('[*] Listening on ', listen_on, flush=True)
     await node.bootstrap(protocol, bootstrap)
 
     if not relay_only:
@@ -1197,7 +1203,7 @@ async def main():
                 node.ping()
                 start = check
                 node.announce_self()
-                print(node.peers, flush=True)
+                # print(node.peers, flush=True)
                 if not relay_only:
                     await node.maintain_rtc_channels(max_channels=128)
             if check - last_filter_wipe > 3600:
