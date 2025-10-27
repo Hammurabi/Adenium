@@ -952,6 +952,8 @@ class Node:
         if self.filter.seen(msg):
             return
         self.filter.add(msg)
+        original_message = str(msg)
+        self.peers.add(addr)
         msg = json.loads(msg)
         if not verify_hashcash(msg):
             return
@@ -997,7 +999,7 @@ class Node:
             if recipient == self.id:
                 self.receive_candidate(sender, candidate, addr)
                 return
-        self.broadcast(json.dumps(msg), set([addr]))
+        self.broadcast(original_message, set([addr]))
 
     
     async def connect_udp(self, addr):
