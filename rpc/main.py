@@ -4,6 +4,7 @@ import json
 import math
 import time
 import struct
+import random
 import hashlib
 import asyncio
 import secrets
@@ -960,11 +961,19 @@ class Node:
         if verbose:
             print('[*] Received ', msg['Type'], ' from ', addr, flush=True)
         if msg['Type'] == 'Ping':
+            dht = list(self.dht)
+            sample = random.sample(dht, min(4, len(dht)))
             pong, _ = hashcash({
                 'Type': 'Pong',
+                'Sample': sample,
                 'Timestamp': time.monotonic()
             })
             self.protocol.send(json.dumps(pong), addr)
+        elif msg['Type'] == 'Pong':
+            sample = msg['Sample']
+            print('[+] Received Sample: ', sample)
+            for i in sample:
+                self.dht.add(i)
         elif msg['Type'] == 'Announce':
             dht_key = msg['content']['id']
             ip      = msg['content']['ip']
