@@ -586,7 +586,8 @@ class RTCNode:
                     "Type": "RelayCandidate",
                     "Sender": self.node.id,
                     "Recipient": peer,
-                    "Candidate": encrypted
+                    "Candidate": encrypted,
+                    'timestamp': time.monotonic()
                 }))
 
         offer = await pc.createOffer()
@@ -597,7 +598,8 @@ class RTCNode:
             "Type": "RelayOffer",
             "Sender": self.node.id,
             "Recipient": peer,
-            "Offer": encrypted
+            "Offer": encrypted,
+            'timestamp': time.monotonic()
         }))
         if verbose:
             print(f"[*] Offer sent to {peer}", flush=True)
@@ -652,7 +654,8 @@ class RTCNode:
                     "Type": "RelayCandidate",
                     "Sender": self.node.id,
                     "Recipient": peer,
-                    "Candidate": encrypted
+                    "Candidate": encrypted,
+                    'timestamp': time.monotonic()
                 }))
 
         await pc.setRemoteDescription(RTCSessionDescription(sdp=offer_sdp, type="offer"))
@@ -664,7 +667,8 @@ class RTCNode:
             "Type": "RelayAnswer",
             "Sender": self.node.id,
             "Recipient": peer,
-            "Answer": encrypted
+            "Answer": encrypted,
+            'timestamp': time.monotonic()
         }))
 
         if verbose:
@@ -922,6 +926,9 @@ class Node:
         peers_to_connect = [hd for hd in self.dht if hd not in self.rtcnode.channels]
 
         for hd in peers_to_connect:
+            if hd == self.id:
+                continue
+
             if len(self.rtcnode.channels) >= max_channels:
                 break  # stop once we hit max
 
@@ -976,6 +983,8 @@ class Node:
             sample = msg['Sample']
             print('[+] Received Sample: ', sample)
             for i in sample:
+                if i == self.id:
+                    continue
                 self.dht.add(i)
         elif msg['Type'] == 'Announce':
             dht_key = msg['content']['id']
@@ -1048,10 +1057,11 @@ class Node:
             self.filter.add(msg)
         # print('[*] Sending ', msg)
 
-        for peer in self.peers:
-            if peer in exclude:
-                continue
-            self.protocol.send(msg, peer)
+        for _ in range(7):
+            for peer in self.peers:
+                if peer in exclude:
+                    continue
+                self.protocol.send(msg, peer)
 
     async def receive_message(self, channel, label, peer, msg):
         try:
