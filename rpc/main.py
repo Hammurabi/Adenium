@@ -1007,6 +1007,16 @@ class Node:
         self.peers.add(addr)
 
     async def bootstrap(self, protocol, addresses):
+        my_ip = (public_ip, listen_on[1])
+        filtered_addresses = []
+        for addr in addresses:
+            if addr == my_ip:
+                print(f"[!] Removing own address: {addr}")
+            else:
+                print(f"[+] Keeping address: {addr}")
+                filtered_addresses.append(addr)
+        addresses = filtered_addresses
+
         self.protocol = protocol
         announcement, h = hashcash({'Type': 'Announce', 'content': {'id': self.id, 'ip':public_ip, 'port': listen_on[1]}, 'timestamp': time.monotonic()})
         self.announce = json.dumps(announcement)
@@ -1161,7 +1171,8 @@ async def main():
                 start = check
                 node.announce_self()
                 print(node.peers)
-                await node.maintain_rtc_channels(max_channels=128)
+                if not relay_only:
+                    await node.maintain_rtc_channels(max_channels=128)
             if check - last_filter_wipe > 3600:
                 node.clear_filters()
                 last_filter_wipe = check
