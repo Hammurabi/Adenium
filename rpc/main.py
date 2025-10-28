@@ -699,7 +699,7 @@ class RTCNode:
                         if verbose:
                             traceback.print_exc()
                             
-                await asyncio.sleep(10)  # every 5s
+                await asyncio.sleep(20)
 
         # Watchdog for timeout
         async def timeout_watchdog():
