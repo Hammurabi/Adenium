@@ -993,8 +993,6 @@ class Node:
         msg = json.loads(msg)
         if not verify_hashcash(msg):
             return
-        if verbose:
-            print('[*] Received ', msg['Type'], ' from ', addr, flush=True)
         if msg['Type'] == 'Ping':
             sample = msg['Sample']
             if verbose:
@@ -1003,13 +1001,15 @@ class Node:
                 if i == self.id:
                     continue
                 self.dht.add(i)
+            if verbose:
+                print(f"[*] Received (PING) {sample}")
             return
         elif msg['Type'] == 'Announce':
             dht_key = msg['Content']['id']
             ip      = msg['Content']['ip']
             port    = msg['Content']['port']
             if verbose:
-                print(f"[*] Received {dht_key}")
+                print(f"[*] Received (ANNOUNCE) {dht_key}")
             self.dht.add(dht_key)
             asyncio.create_task(self.connect_udp((ip, int(port))))
         elif msg['Type'] == 'RelayIntent':
@@ -1023,6 +1023,8 @@ class Node:
             sender = msg['Sender']
             recipient = msg['Recipient']
             offer = msg['Offer']
+            if verbose:
+                print(f"[*] Received (OFFER) {sender}:{recipient}")
             if recipient == self.id:
                 self.receive_offer(sender, offer, addr)
                 return
@@ -1030,6 +1032,8 @@ class Node:
             sender = msg['Sender']
             recipient = msg['Recipient']
             answer = msg['Answer']
+            if verbose:
+                print(f"[*] Received (ANSWER) {sender}:{recipient}")
             if recipient == self.id:
                 self.receive_answer(sender, answer, addr)
                 return
@@ -1037,6 +1041,8 @@ class Node:
             sender = msg['Sender']
             recipient = msg['Recipient']
             candidate = msg['Candidate']
+            if verbose:
+                print(f"[*] Received (CANDIDATE) {sender}:{recipient}")
             if recipient == self.id:
                 self.receive_candidate(sender, candidate, addr)
                 return
