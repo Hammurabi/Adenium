@@ -995,7 +995,7 @@ class Node:
             return
         if verbose:
             print('[*] Received ', msg['Type'], ' from ', addr, flush=True)
-        elif msg['Type'] == 'Ping':
+        if msg['Type'] == 'Ping':
             sample = msg['Sample']
             if verbose:
                 print('[+] Received Sample: ', sample)
@@ -1008,6 +1008,8 @@ class Node:
             dht_key = msg['Content']['id']
             ip      = msg['Content']['ip']
             port    = msg['Content']['port']
+            if verbose:
+                print(f"[*] Received {dht_key}")
             self.dht.add(dht_key)
             asyncio.create_task(self.connect_udp((ip, int(port))))
         elif msg['Type'] == 'RelayIntent':
