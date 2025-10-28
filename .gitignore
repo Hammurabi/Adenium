@@ -34,7 +34,7 @@ build/*
 .vscode/*
 .DS_Store
 
-rpc/keys.json
-rpc/key.json
-rpc/test/*
-rpc/keypair.json
+gateway/keys.json
+gateway/key.json
+gateway/test/*
+gateway/keypair.json
