@@ -798,6 +798,7 @@ class Node:
         self.relay_only = relay_only
         self.lpc = None
         self.intents = set()
+        self.last_seen = {}
 
     def set_lpc(self, lpc):
         self.lpc = lpc
@@ -966,6 +967,18 @@ class Node:
     async def broadcast_json(self, msg, exclude=set(), retry=5):
         msg, _ = hashcash(msg)
         self.broadcast(json.dumps(msg), exclude, retry=retry)
+
+    async def prune_inactive_peers(self, timeout=120):
+        now = time.monotonic()
+        to_remove = [peer for peer, last in self.last_seen.items() if now - last > timeout]
+
+        for peer in to_remove:
+            if peer in self.peers:
+                self.peers.remove(peer)
+            self.last_seen.pop(peer, None)
+            if verbose:
+                print(f"[-] Removed inactive peer {peer}", flush=True)
+
     
     def on_message(self, msg, addr=None):
         if self.filter.seen(msg):
@@ -974,6 +987,7 @@ class Node:
         original_message = str(msg)
         if addr:
             self.peers.add(addr)
+            self.last_seen[addr] = time.monotonic()
         msg = json.loads(msg)
         if not verify_hashcash(msg):
             return
@@ -1041,6 +1055,7 @@ class Node:
             return
         self.protocol.send(self.announce, addr)
         self.peers.add(addr)
+        self.last_seen[addr] = time.monotonic()
 
     async def bootstrap(self, protocol, addresses):
         self.protocol = protocol
@@ -1227,6 +1242,7 @@ async def main():
                     await node.maintain_rtc_channels(max_channels=128)
             if check - last_announce > 120:
                 node.announce_self()
+                node.prune_inactive_peers(timeout=120)
                 last_announce = check
             if check - last_filter_wipe > 3600:
                 node.clear_filters()
