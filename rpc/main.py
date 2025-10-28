@@ -447,6 +447,7 @@ msg_ping = 0x0022FF222
 msg_pong = 0x0022FF444
 msg_rely = 0x0022FF666
 msg_psub = 0x0022FF999
+msg_json = 0x0022FF333
 
 def ping_msg_():
     return struct.pack('>I', msg_ping) + struct.pack('>f', time.monotonic())
@@ -454,8 +455,14 @@ def pong_msg_():
     return struct.pack('>I', msg_pong) + struct.pack('>f', time.monotonic())
 def pack_relay(content):
     return struct.pack('>I', msg_rely) + struct.pack('>I', len(content)) + content 
+def pack_json(content):
+    if isinstance(content, str):
+        content = content.encode()
+    if isinstance(content, dict):
+        content = json.dumps(content).encode()
+    return struct.pack('>I', msg_json) + struct.pack('>I', len(content)) + content
 def pack_sub(content, destination):
-    return struct.pack('>I', msg_rely) + struct.pack('>I', len(destination)) + destination + struct.pack('>I', len(content)) + content 
+    return struct.pack('>I', msg_psub) + struct.pack('>I', len(content)) + content
 
 class LPC:
     def __init__(self, node):
@@ -960,12 +967,13 @@ class Node:
         msg, _ = hashcash(msg)
         self.broadcast(json.dumps(msg), exclude, retry=retry)
     
-    def on_message(self, msg, addr):
+    def on_message(self, msg, addr=None):
         if self.filter.seen(msg):
             return
         self.filter.add(msg)
         original_message = str(msg)
-        self.peers.add(addr)
+        if addr:
+            self.peers.add(addr)
         msg = json.loads(msg)
         if not verify_hashcash(msg):
             return
@@ -979,7 +987,8 @@ class Node:
                 'Sample': sample,
                 'Timestamp': time.monotonic()
             })
-            self.protocol.send(json.dumps(pong), addr)
+            if addr:
+                self.protocol.send(json.dumps(pong), addr)
             return
         elif msg['Type'] == 'Pong':
             sample = msg['Sample']
@@ -1025,7 +1034,7 @@ class Node:
                 self.receive_candidate(sender, candidate, addr)
                 return
         self.broadcast(original_message, set([addr]), retry=2)
-
+        self.rtcnode.broadcast(pack_json(json.dumps(msg)))
     
     async def connect_udp(self, addr):
         if addr in self.peers:
@@ -1082,6 +1091,11 @@ class Node:
                 # Remaining bytes = content
                 self.lpc.send(peer, msg[8:8 + content_len])
                 # self.rtcnode.broadcast(og, set([peer]))
+            elif msg_json:
+                content_len = struct.unpack('>I', msg[4:8])[0]
+                content = json.loads(msg[8:8 + content_len].decode('utf-8'))
+                self.rtcnode.broadcast(msg, set([peer]))
+                self.broadcast_json(content)
         except:
             if verbose:
                 print('[!] A corrupt message received', flush=True)
@@ -1098,17 +1112,17 @@ class Node:
         except:
             print('[!] Could not send PONG', flush=True)
 
-    async def lpc_broadcast(self, peer, content):
+    async def lpc_broadcast(self, content, exclude=set()):
         try:
-            self.rtcnode.broadcast(pack_relay(content))
+            self.rtcnode.broadcast(pack_relay(content), exclude=exclude)
         except:
             print('[!] Could not broadcast MESSAGE', flush=True)
 
-    async def lpc_submit(self, peer, content):
+    async def lpc_submit(self, content, peer):
         channel = self.rtcnode.channels.get(peer)
         if channel:
             try:
-                channel.send(pack_relay(content))
+                channel.send(pack_sub(content))
             except:
                 print('[!] Could not send MESSAGE', flush=True)
 
