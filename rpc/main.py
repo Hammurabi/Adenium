@@ -444,15 +444,15 @@ class UDPProtocol(asyncio.DatagramProtocol):
         self.transport.sendto(message.encode(), addr)
 
 msg_ping = 0x0022FF222
-msg_pong = 0x0022FF444
+# msg_pong = 0x0022FF444
 msg_rely = 0x0022FF666
 msg_psub = 0x0022FF999
 msg_json = 0x0022FF333
 
-def ping_msg_():
-    return struct.pack('>I', msg_ping) + struct.pack('>f', time.monotonic())
-def pong_msg_():
-    return struct.pack('>I', msg_pong) + struct.pack('>f', time.monotonic())
+# def ping_msg_():
+#     return struct.pack('>I', msg_ping) + struct.pack('>f', time.monotonic())
+# def pong_msg_():
+#     return struct.pack('>I', msg_pong) + struct.pack('>f', time.monotonic())
 def pack_relay(content):
     return struct.pack('>I', msg_rely) + struct.pack('>I', len(content)) + content 
 def pack_json(content):
@@ -576,7 +576,8 @@ class RTCNode:
         def on_open():
             # if verbose:
             print(f"[*] DataChannel to {peer} is open and ready for messages.", flush=True)
-            asyncio.create_task(self.node.ping_msg(channel))
+            # asyncio.create_task(self.node.ping_msg(channel))
+            self.node.ping()
 
         # Handle ICE candidates found locally
         @pc.on("icecandidate")
@@ -629,7 +630,8 @@ class RTCNode:
         def on_datachannel(channel):
             # if verbose:
             print(f"[*] Incoming channel from {peer}: {channel.label}", flush=True)
-            asyncio.create_task(self.node.ping_msg(channel))
+            self.node.ping()
+            # asyncio.create_task(self.node.ping_msg(channel))
             self.channels[peer] = channel
 
             @channel.on("message")
@@ -695,18 +697,18 @@ class RTCNode:
                 self.channels.pop(peer, None)
                 self.peer_connections.pop(peer, None)
 
-        async def ping_loop():
-            while not done.is_set():
-                channel = self.channels.get(peer)
-                if channel and channel.readyState == "open":
-                    try:
-                        await self.node.ping_msg(channel)
-                    except Exception as e:
-                        print(f"[!] Keep-alive ping failed for {peer}: {e}", flush=True)
-                        if verbose:
-                            traceback.print_exc()
+        # async def ping_loop():
+        #     while not done.is_set():
+        #         channel = self.channels.get(peer)
+        #         if channel and channel.readyState == "open":
+        #             try:
+        #                 await self.node.ping_msg(channel)
+        #             except Exception as e:
+        #                 print(f"[!] Keep-alive ping failed for {peer}: {e}", flush=True)
+        #                 if verbose:
+        #                     traceback.print_exc()
                             
-                await asyncio.sleep(20)
+        #         await asyncio.sleep(20)
 
         # Watchdog for timeout
         async def timeout_watchdog():
@@ -722,7 +724,7 @@ class RTCNode:
                 done.set()  # ensure keep_alive ends
 
         # Run both: normal state change listener and watchdog
-        await asyncio.gather(done.wait(), timeout_watchdog(), ping_loop())
+        await asyncio.gather(done.wait(), timeout_watchdog())#, ping_loop())
 
     async def handle_signal(self, me, peer, candidate):
         pc = self.peer_connections.get(peer)
@@ -993,18 +995,7 @@ class Node:
             return
         if verbose:
             print('[*] Received ', msg['Type'], ' from ', addr, flush=True)
-        if msg['Type'] == 'Ping':
-            dht = list(self.dht)
-            sample = random.sample(dht, min(4, len(dht)))
-            pong, _ = hashcash({
-                'Type': 'Pong',
-                'Sample': sample,
-                'Timestamp': time.monotonic()
-            })
-            if addr:
-                self.protocol.send(json.dumps(pong), addr)
-            return
-        elif msg['Type'] == 'Pong':
+        elif msg['Type'] == 'Ping':
             sample = msg['Sample']
             if verbose:
                 print('[+] Received Sample: ', sample)
@@ -1073,8 +1064,11 @@ class Node:
         self.filter = ScalableBloomFilter()
 
     def ping(self):
+        dht = list(self.dht)
+        sample = random.sample(dht, min(4, len(dht)))
         ping, _ = hashcash({
             'Type': 'Ping',
+            'Sample': sample,
             'Timestamp': time.monotonic()
         })
         self.broadcast(json.dumps(ping), exclude=set())
@@ -1098,12 +1092,12 @@ class Node:
             msg_type = struct.unpack('>I', msg[:4])[0]
             if msg_type == msg_ping:
                 if verbose:
-                    print('[*] Received PING from {peer}')
-                asyncio.create_task(self.pong_msg(channel))
-            elif msg_pong:
-                if verbose:
-                    print('[*] Received PONG from {peer}')
-                return
+                    print(f"[*] Received Ping from {peer}")
+                # asyncio.create_task(self.pong_msg(channel))
+            # elif msg_pong:
+            #     if verbose:
+            #         print("[*] Received Pong from {peer}")
+            #     return
             elif msg_rely:
                 if verbose:
                     print('[*] Received RELAY from {peer}')
@@ -1123,16 +1117,16 @@ class Node:
                 print('[!] A corrupt message received', flush=True)
             traceback.print_exc()
     
-    async def ping_msg(self, channel):
-        try:
-            channel.send(ping_msg_())
-        except:
-            print('[!] Could not send PING', flush=True)
-    async def pong_msg(self, channel):
-        try:
-            channel.send(pong_msg_())
-        except:
-            print('[!] Could not send PONG', flush=True)
+    # async def ping_msg(self, channel):
+    #     try:
+    #         channel.send(ping_msg_())
+    #     except:
+    #         print('[!] Could not send PING', flush=True)
+    # async def pong_msg(self, channel):
+    #     try:
+    #         channel.send(pong_msg_())
+    #     except:
+    #         print('[!] Could not send PONG', flush=True)
 
     async def lpc_broadcast(self, content, exclude=set()):
         try:
@@ -1145,6 +1139,14 @@ class Node:
         if channel:
             try:
                 channel.send(pack_sub(content))
+            except:
+                print('[!] Could not send MESSAGE', flush=True)
+
+    async def json_submit(self, content, peer):
+        channel = self.rtcnode.channels.get(peer)
+        if channel:
+            try:
+                channel.send(msg_json(content))
             except:
                 print('[!] Could not send MESSAGE', flush=True)
 
@@ -1254,7 +1256,7 @@ async def main():
             if check - last_filter_wipe > 3600:
                 node.clear_filters()
                 last_filter_wipe = check
-            if check - last_rtc_wipe > 900:
+            if check - last_rtc_wipe > 60:
                 node.rtcnode.tried = set()
                 for hd, _ in node.rtcnode.channels.items():
                     node.rtcnode.tried.add(hd)
