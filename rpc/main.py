@@ -538,9 +538,9 @@ class RTCNode:
                 continue
             if channel.readyState == "open":
                 channel.send(msg)
-            else:
-                if verbose:
-                    print(f"[!] Skipping {peer}: channel not open", flush=True)
+            # else:
+            #     if verbose:
+            #         print(f"[!] Skipping {peer}: channel not open", flush=True)
 
     async def rtc_offer(self, me, peer):
         if self.node.relay_only:
@@ -568,8 +568,8 @@ class RTCNode:
                 bloom_filter = ScalableBloomFilter()
                 last_filter_wipe = now_time
             bloom_filter.add(message)
-            if verbose:
-                print(f"[*] {label} Received {hashlib.sha256(message).hexdigest()} from {peer}", flush=True)
+            # if verbose:
+            #     print(f"[*] {label} Received {hashlib.sha256(message).hexdigest()} from {peer}", flush=True)
             asyncio.create_task(self.node.receive_message(channel, label, peer, message))
             # self.node.receive_message(channel, label, peer, message)
         @channel.on("open")
@@ -642,8 +642,8 @@ class RTCNode:
                     bloom_filter = ScalableBloomFilter()
                     last_filter_wipe = now_time
                 bloom_filter.add(message)
-                if verbose:
-                    print(f"[*] {label} Received {hashlib.sha256(message).hexdigest()} from {peer}", flush=True)
+                # if verbose:
+                #     print(f"[*] {label} Received {hashlib.sha256(message).hexdigest()} from {peer}", flush=True)
                 # print(f"[*] {label} Received {message} from {peer}")
                 asyncio.create_task(self.node.receive_message(channel, label, peer, message))
 
@@ -964,9 +964,9 @@ class Node:
         })
         self.broadcast(json.dumps(msg), exclude=set(), retry=retry)
 
-    async def broadcast_json(self, msg, exclude=set(), retry=5):
+    async def broadcast_json(self, msg, exclude=set(), excluded_nodes=set(), retry=5):
         msg, _ = hashcash(msg)
-        self.broadcast(json.dumps(msg), exclude, retry=retry)
+        self.broadcast(json.dumps(msg), exclude, excluded_nodes, retry=retry)
 
     def prune_inactive_peers(self, timeout=120):
         now = time.monotonic()
@@ -980,7 +980,7 @@ class Node:
                 print(f"[-] Removed inactive peer {peer}", flush=True)
 
     
-    def on_message(self, msg, addr=None):
+    def on_message(self, msg, addr=None, node=None):
         if self.filter.seen(msg):
             return
         self.filter.add(msg)
@@ -1047,7 +1047,7 @@ class Node:
             if recipient == self.id:
                 self.receive_candidate(sender, candidate, addr)
                 return
-        self.broadcast(original_message, set([addr]), retry=2)
+        self.broadcast(original_message, set([addr]), set([node]), retry=2)
     
     async def connect_udp(self, addr):
         if addr in self.peers:
@@ -1079,11 +1079,11 @@ class Node:
         })
         self.broadcast(json.dumps(ping), exclude=set())
 
-    def broadcast(self, msg, exclude, retry=2):
+    def broadcast(self, msg, exclude, excluded_nodes=set(), retry=2):
         if not self.filter.seen(msg):
             self.filter.add(msg)
         # print('[*] Sending ', msg)
-        self.rtcnode.broadcast(pack_json(msg))
+        self.rtcnode.broadcast(pack_json(msg), exclude=excluded_nodes)
 
         for _ in range(retry):
             for peer in self.peers:
@@ -1097,10 +1097,16 @@ class Node:
             # First 4 bytes = msg_rely
             msg_type = struct.unpack('>I', msg[:4])[0]
             if msg_type == msg_ping:
+                if verbose:
+                    print('[*] Received PING from {peer}')
                 asyncio.create_task(self.pong_msg(channel))
             elif msg_pong:
+                if verbose:
+                    print('[*] Received PONG from {peer}')
                 return
             elif msg_rely:
+                if verbose:
+                    print('[*] Received RELAY from {peer}')
                 # Next 4 bytes = content length
                 content_len = struct.unpack('>I', msg[4:8])[0]
                 # Remaining bytes = content
@@ -1108,9 +1114,10 @@ class Node:
                 # self.rtcnode.broadcast(og, set([peer]))
             elif msg_json:
                 content_len = struct.unpack('>I', msg[4:8])[0]
-                content = json.loads(msg[8:8 + content_len].decode('utf-8'))
-                self.rtcnode.broadcast(msg, set([peer]))
-                self.broadcast_json(content)
+                content = msg[8:8 + content_len].decode('utf-8')
+                if verbose:
+                    print('[*] Received JSON from {peer} {content}')
+                self.on_message(content, None, node=peer)
         except:
             if verbose:
                 print('[!] A corrupt message received', flush=True)
