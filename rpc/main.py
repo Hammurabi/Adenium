@@ -588,7 +588,7 @@ class RTCNode:
                     "Recipient": peer,
                     "Candidate": encrypted,
                     'Timestamp': time.monotonic()
-                }, retry=10))
+                }, retry=5))
 
         offer = await pc.createOffer()
         await pc.setLocalDescription(offer)
@@ -600,7 +600,7 @@ class RTCNode:
             "Recipient": peer,
             "Offer": encrypted,
             'Timestamp': time.monotonic()
-        }, retry=10))
+        }, retry=5))
         if verbose:
             print(f"[*] Offer sent to {peer}", flush=True)
 
@@ -656,7 +656,7 @@ class RTCNode:
                     "Recipient": peer,
                     "Candidate": encrypted,
                     'Timestamp': time.monotonic()
-                }, retry=10))
+                }, retry=5))
 
         await pc.setRemoteDescription(RTCSessionDescription(sdp=offer_sdp, type="offer"))
         answer = await pc.createAnswer()
@@ -669,7 +669,7 @@ class RTCNode:
             "Recipient": peer,
             "Answer": encrypted,
             'Timestamp': time.monotonic()
-        }, retry=10))
+        }, retry=5))
 
         if verbose:
             print(f"[*] Answer sent to {peer}", flush=True)
@@ -946,7 +946,7 @@ class Node:
                     print(f"[*] Creating RTC offer for {hd}", flush=True)
                 asyncio.create_task(self.rtcnode.rtc_offer(self.id, hd))
 
-    async def broadcast_intent(self, recipient, intent, retry=10):
+    async def broadcast_intent(self, recipient, intent, retry=5):
         msg, _ = hashcash({
             'Type': 'RelayIntent',
             'Sender': self.id,
@@ -1024,7 +1024,7 @@ class Node:
             if recipient == self.id:
                 self.receive_candidate(sender, candidate, addr)
                 return
-        self.broadcast(original_message, set([addr]))
+        self.broadcast(original_message, set([addr]), retry=2)
 
     
     async def connect_udp(self, addr):
@@ -1056,7 +1056,7 @@ class Node:
         })
         self.broadcast(json.dumps(ping), exclude=set())
 
-    def broadcast(self, msg, exclude, retry=5):
+    def broadcast(self, msg, exclude, retry=2):
         if not self.filter.seen(msg):
             self.filter.add(msg)
         # print('[*] Sending ', msg)
