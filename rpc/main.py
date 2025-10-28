@@ -1122,7 +1122,7 @@ class Node:
                 content_len = struct.unpack('>I', msg[4:8])[0]
                 content = msg[8:8 + content_len].decode('utf-8')
                 if verbose:
-                    print('[*] Received JSON from {peer} {content}')
+                    print(f"[*] Received JSON from {peer} {content}")
                 self.on_message(content, None, node=peer)
         except:
             if verbose:
