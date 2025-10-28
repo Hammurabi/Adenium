@@ -438,10 +438,12 @@ class UDPProtocol(asyncio.DatagramProtocol):
 
     # send message method
     def send(self, message, addr):
+        if isinstance(message, str):
+            message = message.encode()
         if isinstance(addr, str):
             ip, port = addr.split(':')
             addr = (ip, int(port))
-        self.transport.sendto(message.encode(), addr)
+        self.transport.sendto(message, addr)
 
 msg_ping = 0x0022FF222
 # msg_pong = 0x0022FF444
@@ -480,10 +482,10 @@ class LPC:
             self.node.lpc_submit(msg['Content'], msg['Target'])
 
     def send(self, peer, msg): # incoming; send to client (outbound)
-        msg = {
+        msg = json.dumps({
             'Sender': peer,
             'Content': msg.hex()
-        }
+        })
         self.protocol.send(msg, lpc_to)
 
 async def start_lpc(node):
@@ -1016,6 +1018,8 @@ class Node:
             sender = msg['Sender']
             recipient = msg['Recipient']
             intent = msg['Intent']
+            if verbose:
+                print(f"[*] Received (INTENT) {sender}:{recipient}")
             if recipient == self.id:
                 self.receive_intent(sender, intent, addr)
                 return
@@ -1108,7 +1112,7 @@ class Node:
             #     return
             elif msg_rely:
                 if verbose:
-                    print('[*] Received RELAY from {peer}')
+                    print(f"[*] Received RELAY from {peer}")
                 # Next 4 bytes = content length
                 content_len = struct.unpack('>I', msg[4:8])[0]
                 # Remaining bytes = content
@@ -1157,6 +1161,12 @@ class Node:
                 channel.send(msg_json(content))
             except:
                 print('[!] Could not send MESSAGE', flush=True)
+
+    async def json_broadcast(self, content, exclude=set()):
+        try:
+            self.rtcnode.broadcast(msg_json(content), exclude=exclude)
+        except:
+            print('[!] Could not broadcast MESSAGE', flush=True)
 
 def filter_bootstrap(addresses):
     my_ip = (public_ip, listen_on[1])
