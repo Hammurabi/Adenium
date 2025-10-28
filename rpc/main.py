@@ -1110,7 +1110,7 @@ class Node:
             #     if verbose:
             #         print("[*] Received Pong from {peer}")
             #     return
-            if msg_rely:
+            if msg_type == msg_rely:
                 if verbose:
                     print(f"[*] Received RELAY from {peer}")
                 # Next 4 bytes = content length
@@ -1118,7 +1118,7 @@ class Node:
                 # Remaining bytes = content
                 self.lpc.send(peer, msg[8:8 + content_len])
                 # self.rtcnode.broadcast(og, set([peer]))
-            elif msg_json:
+            elif msg_type == msg_json:
                 content_len = struct.unpack('>I', msg[4:8])[0]
                 content = msg[8:8 + content_len].decode('utf-8')
                 if verbose:
