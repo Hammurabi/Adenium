@@ -968,7 +968,7 @@ class Node:
         msg, _ = hashcash(msg)
         self.broadcast(json.dumps(msg), exclude, retry=retry)
 
-    async def prune_inactive_peers(self, timeout=120):
+    def prune_inactive_peers(self, timeout=120):
         now = time.monotonic()
         to_remove = [peer for peer, last in self.last_seen.items() if now - last > timeout]
 
