@@ -445,11 +445,11 @@ class UDPProtocol(asyncio.DatagramProtocol):
             addr = (ip, int(port))
         self.transport.sendto(message, addr)
 
-msg_ping = 0x0022FF222
+# msg_ping = 0x0022FF222
 # msg_pong = 0x0022FF444
-msg_rely = 0x0022FF666
-msg_psub = 0x0022FF999
-msg_json = 0x0022FF333
+msg_rely = 0x222FF666
+msg_psub = 0x222FF999
+msg_json = 0x222FF333
 
 # def ping_msg_():
 #     return struct.pack('>I', msg_ping) + struct.pack('>f', time.monotonic())
@@ -1102,15 +1102,15 @@ class Node:
             # print('msg')
             # First 4 bytes = msg_rely
             msg_type = struct.unpack('>I', msg[:4])[0]
-            if msg_type == msg_ping:
-                if verbose:
-                    print(f"[*] Received Ping from {peer}")
+            # if msg_type == msg_ping:
+            #     if verbose:
+            #         print(f"[*] Received Ping from {peer}")
                 # asyncio.create_task(self.pong_msg(channel))
             # elif msg_pong:
             #     if verbose:
             #         print("[*] Received Pong from {peer}")
             #     return
-            elif msg_rely:
+            if msg_rely:
                 if verbose:
                     print(f"[*] Received RELAY from {peer}")
                 # Next 4 bytes = content length
