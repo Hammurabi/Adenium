@@ -983,7 +983,8 @@ class Node:
             return
         elif msg['Type'] == 'Pong':
             sample = msg['Sample']
-            print('[+] Received Sample: ', sample)
+            if verbose:
+                print('[+] Received Sample: ', sample)
             for i in sample:
                 if i == self.id:
                     continue
@@ -1198,13 +1199,16 @@ async def main():
     last_announce = time.monotonic()
 
     node.ping()
+    next_ping_interval = random.uniform(15, 25)
 
     try:
         while True:
             check = time.monotonic()
-            if check - start > 10:
+            if check - start > next_ping_interval:
+                print(f"[*] '{len(node.peers)}' Peers, '{len(node.rtcnode.channels)}' Nodes")
                 node.ping()
                 start = check
+                next_ping_interval = random.uniform(15, 25)
                 if not relay_only:
                     await node.maintain_rtc_channels(max_channels=128)
             if check - last_announce > 120:
