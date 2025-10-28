@@ -1048,7 +1048,6 @@ class Node:
                 self.receive_candidate(sender, candidate, addr)
                 return
         self.broadcast(original_message, set([addr]), retry=2)
-        self.rtcnode.broadcast(pack_json(json.dumps(msg)))
     
     async def connect_udp(self, addr):
         if addr in self.peers:
@@ -1084,6 +1083,7 @@ class Node:
         if not self.filter.seen(msg):
             self.filter.add(msg)
         # print('[*] Sending ', msg)
+        self.rtcnode.broadcast(pack_json(msg))
 
         for _ in range(retry):
             for peer in self.peers:
