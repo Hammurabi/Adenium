@@ -1,0 +1,4 @@
+dearpygui==1.10.0
+blspy==2.0.3
+pycryptodome==3.23.0
+mnemonic==0.21
