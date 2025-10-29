@@ -29,6 +29,65 @@ Adenium is designed to make Web3 applications fast, safe, and scalable—a netwo
 
 Discord: https://discord.gg/wqt5FZGbQe
 
+---
+
+## ⚡ Getting Started with Adenium
+
+### 🐍 Gateway Node
+
+The Gateway node allows you to connect to the network easily.
+
+* **Python ≥ 9** is required.
+* Basic familiarity with command-line operations is helpful.
+
+### 🏃‍♂️ Steps to Run a Full Node
+
+1. **Navigate to the GATEWAY folder**
+
+   ```bash
+   cd gateway
+   ```
+
+2. **(Optional but recommended) Create a Python virtual environment**
+
+   ```bash
+   python -m venv adn
+   source adn/bin/activate  # Linux / macOS
+   adn\Scripts\activate     # Windows
+   ```
+
+3. **Install dependencies**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Run the node**
+
+   ```bash
+   python main.py
+   ```
+
+### 🔧 Node Options
+
+* **Relay-only mode**
+
+  ```bash
+  python main.py relay_only
+  ```
+
+  Your node will connect only via its public IP, communicate with bootstrap nodes, and relay surface messages. It will not attempt NAT traversal or find peers via DHT keys.
+
+* **Verbose mode**
+
+  ```bash
+  python main.py verbose
+  ```
+
+  Prints detailed information to the console for monitoring and debugging.
+
+---
+
 
 ## 💖 Support / Fund Me
 
