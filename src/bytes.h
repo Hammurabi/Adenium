@@ -39,6 +39,12 @@ public:
     bytes(uint8_t* bytes, size_t length)
         : data_(bytes, bytes + length) {}
 
+    bytes(const int8_t* bytes, size_t length)
+        : data_(reinterpret_cast<const uint8_t*>(bytes), reinterpret_cast<const uint8_t*>(bytes) + length) {}
+
+    bytes(const uint8_t* bytes, size_t length)
+        : data_(bytes, bytes + length) {}
+
     bytes(const std::vector<int8_t>& vec)
         : data_(vec.begin(), vec.end()) {}
 
