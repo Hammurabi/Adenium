@@ -1,6 +1,9 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <sstream>
+#include <iomanip>
+#include <cstring>
 
 /*
     The 'bytes' class follows the lowercase naming convention used by the C++ Standard Template Library (STL).
@@ -107,6 +110,38 @@ public:
         bytes result(cstr);
         result.data_.insert(result.data_.end(), b.data_.begin(), b.data_.end());
         return result;
+    }
+
+    std::string hex() const {
+        std::ostringstream oss;
+        oss << std::hex << std::setfill('0');
+        for (auto b : data_)
+            oss << std::setw(2) << static_cast<int>(b);
+        return oss.str();
+    }
+
+    static bytes from_hex(const std::string& hex_str) {
+        if (hex_str.size() % 2 != 0)
+            throw std::invalid_argument("bytes::from_hex: hex string must have even length");
+
+        std::vector<uint8_t> vec;
+        vec.reserve(hex_str.size() / 2);
+
+        for (size_t i = 0; i < hex_str.size(); i += 2) {
+            char high = std::tolower(hex_str[i]);
+            char low = std::tolower(hex_str[i + 1]);
+
+            auto hex_to_val = [](char c) -> uint8_t {
+                if (c >= '0' && c <= '9') return c - '0';
+                if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+                throw std::invalid_argument("bytes::from_hex: invalid hex character");
+            };
+
+            uint8_t byte = (hex_to_val(high) << 4) | hex_to_val(low);
+            vec.push_back(byte);
+        }
+
+        return bytes(vec);
     }
 private:
     std::vector<uint8_t> data_;
