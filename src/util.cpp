@@ -673,7 +673,7 @@ uint64_t FromDecimal(const std::string &Decimal)
     return WholeValue + FractionalValue;
 }
 
-bytes EncodeVarBytes(const std::string &Bytes)
+bytes EncodeVarBytes(const bytes &Bytes)
 {
     return EncodeVarInt(static_cast<uint64_t>(Bytes.size())) + Bytes;
 }

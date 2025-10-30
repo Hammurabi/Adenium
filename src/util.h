@@ -171,7 +171,7 @@ uint256_t GetTargetFromCompact(uint32_t nBits);
 uint256_t HashToInt(const std::string& Str);
 bool IsNumber(const std::string& Str);
 
-bytes EncodeVarBytes(const std::string& Bytes);
+bytes EncodeVarBytes(const bytes& Bytes);
 bytes DecodeVarBytes(SafeStream* Stream);
 
 uint64_t FromDecimal(const std::string& Decimal);
