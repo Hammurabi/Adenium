@@ -150,6 +150,14 @@ public:
     void resize(size_t size) {
         data_.resize(size);
     }
+
+    void reserve(size_t size) {
+        data_.reserve(size);
+    }
+
+    void push_back(uint8_t byte) {
+        data_.push_back(byte);
+    }
 private:
     std::vector<uint8_t> data_;
 };
