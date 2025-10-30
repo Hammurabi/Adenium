@@ -1,0 +1,6 @@
+[submodule "blst"]
+	path = blst
+	url = https://github.com/supranational/blst.git
+[submodule "bls-signatures"]
+	path = bls-signatures
+	url = https://github.com/Chia-Network/bls-signatures.git
