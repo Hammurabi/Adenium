@@ -83,7 +83,34 @@ public:
 
         return bytes(std::vector<uint8_t>(data_.begin() + pos, data_.begin() + end_pos));
     }
+    
+    bool operator<(const bytes& other) const {
+        return std::lexicographical_compare(
+            data_.begin(), data_.end(),
+            other.data_.begin(), other.data_.end()
+        );
+    }
 
+    bool operator<(const std::string& str) const {
+        return std::lexicographical_compare(
+            data_.begin(), data_.end(),
+            str.begin(), str.end()
+        );
+    }
+
+    bool operator<(const char* cstr) const {
+        return std::lexicographical_compare(
+            data_.begin(), data_.end(),
+            cstr, cstr + std::strlen(cstr)
+        );
+    }
+
+    bool operator<(const std::vector<uint8_t>& vec) const {
+        return std::lexicographical_compare(
+            data_.begin(), data_.end(),
+            vec.begin(), vec.end()
+        );
+    }
 
     bytes operator+(const bytes& other) const {
         bytes result = *this;
