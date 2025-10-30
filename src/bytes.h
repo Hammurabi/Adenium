@@ -71,6 +71,43 @@ public:
 
         return bytes(std::vector<uint8_t>(data_.begin() + pos, data_.begin() + end_pos));
     }
+
+
+    bytes operator+(const bytes& other) const {
+        bytes result = *this;
+        result.data_.insert(result.data_.end(), other.data_.begin(), other.data_.end());
+        return result;
+    }
+
+    bytes operator+(const std::string& str) const {
+        bytes result = *this;
+        result.data_.insert(result.data_.end(), str.begin(), str.end());
+        return result;
+    }
+
+    bytes operator+(const char* cstr) const {
+        bytes result = *this;
+        result.data_.insert(result.data_.end(), cstr, cstr + std::strlen(cstr));
+        return result;
+    }
+
+    bytes operator+(const std::vector<uint8_t>& vec) const {
+        bytes result = *this;
+        result.data_.insert(result.data_.end(), vec.begin(), vec.end());
+        return result;
+    }
+
+    friend bytes operator+(const std::string& str, const bytes& b) {
+        bytes result(str);
+        result.data_.insert(result.data_.end(), b.data_.begin(), b.data_.end());
+        return result;
+    }
+
+    friend bytes operator+(const char* cstr, const bytes& b) {
+        bytes result(cstr);
+        result.data_.insert(result.data_.end(), b.data_.begin(), b.data_.end());
+        return result;
+    }
 private:
     std::vector<uint8_t> data_;
 };
