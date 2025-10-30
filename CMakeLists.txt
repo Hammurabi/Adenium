@@ -35,6 +35,7 @@ link_directories(
 file(GLOB_RECURSE SOURCE_FILES
     src/*.cpp
     blst/src/*.cpp
+    third_party/*.cpp
 )
 
 add_executable(Adenium ${SOURCE_FILES})
@@ -42,6 +43,7 @@ add_executable(Adenium ${SOURCE_FILES})
 target_include_directories(Adenium PRIVATE
     src
     blst
+    third_party
     bls-signatures/src
     ${Boost_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
