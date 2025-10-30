@@ -24,6 +24,9 @@ public:
 
     bytes() = default;
 
+    bytes(size_t size, uint8_t byte)
+        : data_(size, byte) {}
+
     bytes(const char* cstr) 
         : data_(reinterpret_cast<const uint8_t*>(cstr), reinterpret_cast<const uint8_t*>(cstr) + std::strlen(cstr)) {}
 
