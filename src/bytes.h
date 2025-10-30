@@ -158,6 +158,10 @@ public:
     void push_back(uint8_t byte) {
         data_.push_back(byte);
     }
+
+    void append(const bytes& other) {
+        data_.insert(data_.end(), other.begin(), other.end());
+    }
 private:
     std::vector<uint8_t> data_;
 };
