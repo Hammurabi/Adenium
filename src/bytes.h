@@ -143,6 +143,10 @@ public:
 
         return bytes(vec);
     }
+
+    void resize(size_t size) {
+        data_.resize(size);
+    }
 private:
     std::vector<uint8_t> data_;
 };
