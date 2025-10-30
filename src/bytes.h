@@ -121,6 +121,26 @@ public:
         return result;
     }
 
+    bytes& operator+=(const bytes& other) {
+        data_.insert(data_.end(), other.data_.begin(), other.data_.end());
+        return *this;
+    }
+
+    bytes& operator+=(const std::string& str) {
+        data_.insert(data_.end(), str.begin(), str.end());
+        return *this;
+    }
+
+    bytes& operator+=(const char* cstr) {
+        data_.insert(data_.end(), cstr, cstr + std::strlen(cstr));
+        return *this;
+    }
+
+    bytes& operator+=(const std::vector<uint8_t>& vec) {
+        data_.insert(data_.end(), vec.begin(), vec.end());
+        return *this;
+    }
+
     std::string hex() const {
         std::ostringstream oss;
         oss << std::hex << std::setfill('0');
@@ -167,6 +187,10 @@ public:
 
     void append(const bytes& other) {
         data_.insert(data_.end(), other.begin(), other.end());
+    }
+
+    void clear() {
+        data_.clear();
     }
 private:
     std::vector<uint8_t> data_;
