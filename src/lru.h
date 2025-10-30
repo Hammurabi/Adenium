@@ -22,8 +22,8 @@ public:
             return std::nullopt;
         }
         
-        _Items.splice(_Items.begin(), _Items, it->second);
-        return it->second->second;
+        _Items.splice(_Items.begin(), _Items, It->second);
+        return It->second->second;
     }
 
     ValueType Get(const KeyType& key, const ValueType& default_value) {
