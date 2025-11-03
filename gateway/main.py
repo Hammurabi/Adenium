@@ -519,7 +519,7 @@ class LPC:
             'Content': msg.hex()
         })
         if self.protocol:
-            self.protocol.send(data)
+            self.protocol.send(data.strip())
 
 async def start_lpc(node, host="127.0.0.1", port=lpc_port):
     lpc = LPC(node)
