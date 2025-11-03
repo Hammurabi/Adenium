@@ -21,8 +21,7 @@ from aiortc import RTCPeerConnection, RTCSessionDescription, RTCDataChannel, RTC
 
 public_ip = requests.get('https://api.ipify.org').text
 listen_on = ('0.0.0.0', 1152)
-lpc_from = ('0.0.0.0', 2304)
-lpc_to = ('127.0.0.1', 3456)
+lpc_port = 2304
 verbose = False
 bootstrap_nodes = [
     ('204.44.125.165', 1152),
@@ -466,45 +465,85 @@ def pack_json(content):
 def pack_sub(content, destination):
     return struct.pack('>I', msg_psub) + struct.pack('>I', len(content)) + content
 
+class TCPProtocol:
+    def __init__(self, on_message=None):
+        self.on_message = on_message
+        self.reader = None
+        self.writer = None
+
+    async def connect(self, host, port):
+        self.reader, self.writer = await asyncio.open_connection(host, port)
+        if verbose:
+            print(f"[*] TCP connection established to {host}:{port}")
+
+        asyncio.create_task(self.read_loop())
+
+    async def read_loop(self):
+        try:
+            while True:
+                data = await self.reader.readline()
+                if not data:
+                    break
+                message = data.decode().strip()
+                if self.on_message:
+                    self.on_message.on_message(message, None)
+        except Exception as e:
+            print(f"[!] TCP read error: {e}")
+
+    def send(self, message):
+        if isinstance(message, str):
+            message = message.encode()
+        if self.writer:
+            self.writer.write(message + b'\n')
+            asyncio.create_task(self.writer.drain())
+
 class LPC:
     def __init__(self, node):
         self.node = node
+        self.protocol = None
 
     def set_protocol(self, protocol):
         self.protocol = protocol
-    
-    def on_message(self, msg, _): # received from local client (inbound)
+
+    def on_message(self, msg, _):
         msg = json.loads(msg)
-        msg_type = msg['Type']
+        msg_type = msg.get('Type')
         if msg_type == 'Broadcast':
             self.node.lpc_broadcast(msg['Content'])
         elif msg_type in ('Submit', 'Request'):
             self.node.lpc_submit(msg['Content'], msg['Target'])
 
-    def send(self, peer, msg): # incoming; send to client (outbound)
-        msg = json.dumps({
+    def send(self, peer, msg):
+        data = json.dumps({
             'Sender': peer,
             'Content': msg.hex()
         })
-        self.protocol.send(msg, lpc_to)
+        if self.protocol:
+            self.protocol.send(data)
 
-async def start_lpc(node):
+async def start_lpc(node, host="127.0.0.1", port=lpc_port):
     lpc = LPC(node)
-    loop = asyncio.get_running_loop()
-    transport, protocol = await loop.create_datagram_endpoint(
-        lambda: UDPProtocol(lpc, loop),
-        local_addr=lpc_from
-    )
+    protocol = TCPProtocol(lpc)
     lpc.set_protocol(protocol)
     node.set_lpc(lpc)
-    if verbose:
-        print('[*] LPC Listening on ', lpc_from, flush=True)
+
+    while True:
+        try:
+            await protocol.connect(host, port)
+            if verbose:
+                print(f"[*] LPC connected to {host}:{port}")
+            break  # exit the retry loop on successful connection
+        except (ConnectionRefusedError, OSError) as e:
+            print(f"[!] Local connection failed: {e}. Retrying in 10 seconds...")
+            await asyncio.sleep(10)
 
     try:
         while True:
-            await asyncio.sleep(0.001)
+            await asyncio.sleep(0.001)  # main loop
     except KeyboardInterrupt:
-        transport.close()
+        if protocol.writer:
+            protocol.writer.close()
+            await protocol.writer.wait_closed()
 
 class RTCNode:
     def __init__(self, node):
