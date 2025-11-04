@@ -5,12 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 add_compile_options(-Wno-deprecated-declarations)
 
-if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    add_compile_options("-Werror")
-    add_compile_options(-Wno-unused-private-field)
-elseif(MSVC)
-    add_compile_options(/wd4100)
-endif()
+add_subdirectory(bls-signatures)
 
 
 find_package(LevelDB REQUIRED)
@@ -56,14 +51,14 @@ target_link_libraries(Adenium PRIVATE
     ${OPENSSL_LIBRARIES}
 )
 
+install(TARGETS Adenium DESTINATION bin)
+
 target_compile_options(Adenium PRIVATE
     -Wall
     -Wextra
     -Werror
+    -Wno-unused-parameter   # <--- Add this
 )
-
-install(TARGETS Adenium DESTINATION bin)
-
 
 message(STATUS "LevelDB include dirs: ${LevelDB_INCLUDE_DIRS}")
 message(STATUS "LevelDB library dirs: ${LevelDB_LIBRARY_DIRS}")
