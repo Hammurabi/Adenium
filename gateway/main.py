@@ -515,8 +515,17 @@ class LPC:
 
     def send(self, peer, msg):
         data = json.dumps({
+            'Type': 'Message',
             'Sender': peer,
             'Content': msg.hex()
+        })
+        if self.protocol:
+            self.protocol.send(data.strip() + "\n")
+
+    def identify(self):
+        data = json.dumps({
+            'Type': 'Init',
+            'Content': self.node.id
         })
         if self.protocol:
             self.protocol.send(data.strip() + "\n")
@@ -530,6 +539,7 @@ async def start_lpc(node, host="127.0.0.1", port=lpc_port):
     while True:
         try:
             await protocol.connect(host, port)
+            lpc.identify()
             if verbose:
                 print(f"[*] LPC connected to {host}:{port}")
             break  # exit the retry loop on successful connection
