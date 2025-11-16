@@ -27,11 +27,14 @@ struct TrieNode
     Storage*                                            storage;
 
     TrieNode(Storage *db);
+    void AddChild(uint8_t index, const const_bytes<32>& hash);
     void AddChild(uint8_t index, const RTrieNode& node);
     void RemoveChild(uint8_t index);
+    void RemoveChild(const bytes& hash);
     void SetValue(const const_bytes<32> &newValue);
-    RTrieNode GetChild(uint8_t index);
+    RTrieNode GetChild(uint8_t index, bool cache = true);
     bool IsDirty() const;
+    bool ShouldDelete();
 
     bool Update();
     bytes Hash();

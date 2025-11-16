@@ -1,0 +1,20 @@
+{
+    "Name": "arc11",
+    "Symbol": "_XI",
+    "Amount": 0,
+    "NonFungibles": [
+        {
+            "Name": "My Amazing Monkey",
+            "Symbol": "_MAM",
+            "Serial": 1,
+            "Data": [
+            ]
+        },
+        {
+            "Something": "Something In String Format"
+        },
+        {
+            "Bingo": "Bongo"
+        }
+    ]
+}
