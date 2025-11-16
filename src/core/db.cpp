@@ -6,6 +6,7 @@ LevelDB::LevelDB(const std::string &_Dbpath)
 {
     leveldb::Options options;
     options.create_if_missing = true;
+    options.compression = leveldb::kSnappyCompression;
     leveldb::Status status = leveldb::DB::Open(options, _Dbpath, &_Db);
     if (!status.ok()) {
         throw std::runtime_error("Failed to open LevelDB: " + status.ToString());
@@ -20,6 +21,21 @@ LevelDB::~LevelDB()
 void LevelDB::Put(const bytes &Key, const bytes& Value)
 {
     _Db->Put(leveldb::WriteOptions(), Key.to_string(), Value.to_string());
+}
+
+bytes LevelDB::Get(const bytes &Key)
+{
+    std::string ReturnedValue = "";
+    leveldb::Status status = _Db->Get(leveldb::ReadOptions(), Key.to_string(), &ReturnedValue);
+    if (!status.ok()) {
+        if (status.IsNotFound()) {
+            return bytes(); // Key not found
+        } else {
+            throw std::runtime_error("Failed to get value: " + status.ToString());
+        }
+    }
+
+    return ReturnedValue;
 }
 
 bool LevelDB::Get(const bytes &Key, bytes* Value)
@@ -56,6 +72,18 @@ void LevelDB::Close()
     _Db = nullptr;
 }
 
+void LevelDB::Flush()
+{
+    _Db->CompactRange(nullptr, nullptr);
+    // 26629 20002
+    leveldb::ReadOptions options;
+    auto it = _Db->NewIterator(options);
+    size_t count = 0;
+    for (it->SeekToFirst(); it->Valid(); it->Next()) count++;
+
+    std::cout << "Stored trie nodes: " << count << std::endl;
+}
+
 void DummyStorage::Put(const bytes &Key, const bytes &Value)
 {
     _Storage[Key] = Value;
@@ -69,6 +97,15 @@ bool DummyStorage::Get(const bytes &Key, bytes *Value)
         return true;
     }
     return false;
+}
+
+bytes DummyStorage::Get(const bytes &Key)
+{
+    auto it = _Storage.find(Key);
+    if (it != _Storage.end()) {
+        return it->second;
+    }
+    return bytes();
 }
 
 void DummyStorage::Delete(const bytes Key)
@@ -92,6 +129,17 @@ void StorageCacheWrapper::Put(const bytes &Key, const bytes &Value)
 {
     _Cache[Key] = Value;
     _Deletes.erase(Key);
+}
+
+bytes StorageCacheWrapper::Get(const bytes &Key)
+{
+    if (_Deletes.find(Key) != _Deletes.end()) return bytes();
+    auto Find = _Cache.find(Key);
+    if (Find != _Cache.end()) {
+        return Find->second;
+    } else {
+        return _Db->Get(Key);
+    }
 }
 
 bool StorageCacheWrapper::Get(const bytes &Key, bytes *Value)
@@ -119,6 +167,7 @@ void StorageCacheWrapper::Flush()
 
     _Cache.clear();
     _Deletes.clear();
+    _Db->Flush();
 }
 
 void DummyStorage::Display()
@@ -146,6 +195,11 @@ void StorageWrapper::Put(const bytes &Key, const bytes &Value)
     _Db->Put(_Prefix + Key, Value);
 }
 
+bytes StorageWrapper::Get(const bytes &Key)
+{
+    return _Db->Get(_Prefix + Key);
+}
+
 bool StorageWrapper::Get(const bytes &Key, bytes *Value)
 {
     return _Db->Get(_Prefix + Key, Value);
@@ -158,4 +212,9 @@ void StorageWrapper::Delete(const bytes Key)
 
 void StorageWrapper::Display()
 {
+}
+
+void StorageWrapper::Flush()
+{
+    _Db->Flush();
 }
