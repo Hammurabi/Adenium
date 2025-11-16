@@ -124,6 +124,16 @@ uint256_t to_uint256(const uint8_t *bytes)
     return result;
 }
 
+uint256_t ToU256(const bytes &B)
+{
+    uint256_t Result = 0;
+    for (int i = 0; i < 32; ++i) {
+        Result <<= 8;
+        Result |= B[i];
+    }
+    return Result;
+}
+
 uint64_t TimeMs()
 {
     using namespace std::chrono;
@@ -276,7 +286,7 @@ bytes Decrypt_AES_GCM(const bytes &ciphertext, const bytes &key, const bytes &iv
 }
 
 
-bytes BytesToNibbles(const bytes &Bytes, bool *IsEncoded)
+bytes BytesToNibbles(const bytes &Bytes, size_t *IsEncoded)
 {
     bytes Nibbles;
     Nibbles.reserve(Bytes.size() * 2);
@@ -285,35 +295,66 @@ bytes BytesToNibbles(const bytes &Bytes, bool *IsEncoded)
         Nibbles.push_back(c & 0x0F);
     }
 
-    if (IsEncoded) {
-        if (Nibbles[0] == ODD_NIBBLE) {
+    if (IsEncoded && !Nibbles.empty()) {
+        if (Nibbles[0] == ODD_NIBBLE_ZERO_BYTES) {
             Nibbles = Nibbles.sub(1);
-            *IsEncoded = true;
+            *IsEncoded = 2;
+        } else if (Nibbles[0] == EVEN_NIBBLE_ZERO_BYTES) {
+            Nibbles = Nibbles.sub(2);
+            *IsEncoded = 2;
+        } else if (Nibbles[0] == ODD_NIBBLE) {
+            Nibbles = Nibbles.sub(1);
+            *IsEncoded = 1;
         } else if (Nibbles[0] == EVEN_NIBBLE) {
             Nibbles = Nibbles.sub(2);
-            *IsEncoded = true;
+            *IsEncoded = 1;
         } else if (Nibbles[0] == ODD_NIBBLE_EMPTY) {
             Nibbles = Nibbles.sub(1);
-            *IsEncoded = false;
+            *IsEncoded = 0;
         } else if (Nibbles[0] == EVEN_NIBBLE_EMPTY) {
             Nibbles = Nibbles.sub(2);
-            *IsEncoded = false;
+            *IsEncoded = 0;
         }
     }
 
     return Nibbles;
 }
 
-bytes NibblesToBytes(const bytes &Nibbles, bool IsEmpty, bool IsEncoded)
+
+bytes NibblesFromBytes(const bytes &Bytes, bool IsEncoded)
+{
+    bytes Nibbles;
+    Nibbles.reserve(Bytes.size() * 2);
+    for (unsigned char c : Bytes) {
+        Nibbles.push_back((c >> 4) & 0x0F);
+        Nibbles.push_back(c & 0x0F);
+    }
+
+    if (IsEncoded && !Nibbles.empty()) {
+        if (Nibbles[0] == ODD_NIBBLE) {
+            Nibbles = Nibbles.sub(1);
+        } else if (Nibbles[0] == EVEN_NIBBLE) {
+            Nibbles = Nibbles.sub(2);
+        } else if (Nibbles[0] == ODD_NIBBLE_EMPTY) {
+            Nibbles = Nibbles.sub(1);
+        } else if (Nibbles[0] == EVEN_NIBBLE_EMPTY) {
+            Nibbles = Nibbles.sub(2);
+        }
+    }
+
+    return Nibbles;
+}
+
+bytes NibblesToBytes(const bytes &Nibbles, bool IsEmpty, bool IsZero, bool IsEncoded)
 {
     bytes _Nibbles;
 
     if (IsEncoded) {
         if (Nibbles.size() % 2 == 0) {
-            _Nibbles.push_back(IsEmpty ? EVEN_NIBBLE_EMPTY : EVEN_NIBBLE);
+            _Nibbles.push_back(IsEmpty ? EVEN_NIBBLE_EMPTY : (IsZero ? EVEN_NIBBLE_ZERO_BYTES : EVEN_NIBBLE));
             _Nibbles.push_back(0x00);
         } else {
-            _Nibbles.push_back(IsEmpty ? ODD_NIBBLE_EMPTY : ODD_NIBBLE);
+            _Nibbles.push_back(IsEmpty ? ODD_NIBBLE_EMPTY : (IsZero ? ODD_NIBBLE_ZERO_BYTES : ODD_NIBBLE));
         }
 
         _Nibbles.append(Nibbles);
@@ -321,7 +362,7 @@ bytes NibblesToBytes(const bytes &Nibbles, bool IsEmpty, bool IsEncoded)
         _Nibbles = Nibbles;
     }
     
-    std::string Bytes;
+    bytes Bytes;
     Bytes.reserve(Nibbles.size() / 2);
 
     for (size_t i = 0; i < _Nibbles.size(); i += 2) {
@@ -350,6 +391,15 @@ uint128_t DecodeBits(SafeStream *Stream)
                 8,
                 true); // big-endian
     return Value;
+}
+
+uint32_t ToBigEndian16(uint32_t Num)
+{
+    if (std::endian::native == std::endian::big)
+        return Num;
+
+    return ((Num & 0x00FFU) << 8) |
+           ((Num & 0xFF00U) >> 8);
 }
 
 uint32_t ToBigEndian32(uint32_t Num)
@@ -403,6 +453,28 @@ void ToBytes(uint256_t Value, uint8_t *Bytes)
     }
 }
 
+const_bytes<32> U256ToBytes(uint256_t Value)
+{
+    const_bytes<32> Bytes;
+    for (int i = 31; i >= 0; --i) {
+        (*Bytes)[i] = static_cast<uint8_t>(Value & 0xFF);
+        Value >>= 8;
+    }
+
+    return Bytes;
+}
+
+uint64_t FromBytes(const bytes &b)
+{
+    if (b.size() != sizeof(uint64_t))
+        throw std::runtime_error("Invalid byte array size for uint64_t");
+
+    uint64_t NetworkValue;
+    std::memcpy(&NetworkValue, &b[0], sizeof(uint64_t));
+
+    return ToBigEndian(NetworkValue);
+}
+
 SafeStream::SafeStream() : position_(0), buffer_("") {}
 
 void SafeStream::Write(const bytes &data)
@@ -429,7 +501,7 @@ bool SafeStream::Read(uint8_t *data, size_t size)
 void SafeStream::ReadInto(uint8_t *data, size_t size)
 {
     if (!Read(reinterpret_cast<uint8_t*>(data), size)) {
-        throw std::runtime_error("Failed to read remaining bytes of VarInt");
+        throw std::runtime_error("ReadInto: Failed to read requested bytes from SafeStream");
     }
 }
 
@@ -437,7 +509,7 @@ bytes SafeStream::ReadBytes(uint64_t Length)
 {
     bytes Bytes(Length, 0);
     if (!Read(reinterpret_cast<uint8_t*>(&Bytes[0]), Length)) {
-        throw std::runtime_error("Failed to read remaining bytes of VarInt");
+        throw std::runtime_error("ReadBytes: Failed to read requested bytes from SafeStream");
     }
 
     return Bytes;
@@ -566,7 +638,7 @@ uint64_t DecodeVarInt(SafeStream *Stream)
     std::string FullBytes(8, 0);
     FullBytes[8 - ByteLength] = FirstByte;
     if (!Stream->Read(reinterpret_cast<uint8_t*>(&FullBytes[8 - ByteLength + 1]), ByteLength - 1)) {
-        throw std::runtime_error("Failed to read remaining bytes of VarInt");
+        throw std::runtime_error("Failed to read remaining bytes of VarInt " + std::to_string(ByteLength - 1) + " " + std::to_string(Stream->Tell()) + " " + std::to_string(Stream->Size()));
     }
     uint64_t Value = 0;
     std::memcpy(&Value, FullBytes.data(), 8);
@@ -671,6 +743,27 @@ uint64_t FromDecimal(const std::string &Decimal)
         FractionalValue += (FractionalPart[i] - '0') * (OneCoin / static_cast<uint64_t>(std::pow(10, i + 1)));
     }
     return WholeValue + FractionalValue;
+}
+
+bytes MerkleRoot(const std::vector<bytes> &leaves)
+{
+    std::vector<bytes> layer(leaves);
+
+    while (layer.size() > 1) {
+        std::vector<bytes> next_layer;
+
+        for (std::size_t i = 0; i < layer.size(); i += 2) {
+            if (i + 1 < layer.size()) {
+                next_layer.push_back(Keccak(layer[i] + layer[i + 1]));
+            } else {
+                next_layer.push_back(Keccak(layer[i] + layer[i]));
+            }
+        }
+
+        layer = std::move(next_layer);
+    }
+
+    return layer.front();
 }
 
 bytes EncodeVarBytes(const bytes &Bytes)
