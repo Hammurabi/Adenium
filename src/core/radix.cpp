@@ -7,12 +7,12 @@ TrieNode::TrieNode(Storage *db)
 
 void TrieNode::AddChild(uint8_t index, const RTrieNode &node)
 {
-    // bytes hash = node->Hash();
-    // if (children[index].has_value() && children[index].value() == hash) {
-    //     return; // No change
-    // }
+    bytes hash = node->Hash();
+    if (children[index].has_value() && children[index].value() == hash) {
+        return; // No change
+    }
 
-    // children[index] = node->Hash();
+    children[index] = node->Hash();
     inMemoryChildren[index] = node;
     dirty = true;
 }
