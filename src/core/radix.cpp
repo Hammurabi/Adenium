@@ -8,7 +8,7 @@ TrieNode::TrieNode(Storage *db)
 void TrieNode::AddChild(uint8_t index, const const_bytes<32> &hash)
 {
     if (children[index].has_value() && children[index].value() == hash) {
-        return; // No change
+        return;
     }
 
     children[index] = hash;
@@ -18,12 +18,6 @@ void TrieNode::AddChild(uint8_t index, const const_bytes<32> &hash)
 
 void TrieNode::AddChild(uint8_t index, const RTrieNode &node)
 {
-    // bytes hash = node->Hash();
-    // if (children[index].has_value() && children[index].value() == hash) {
-    //     return; // No change
-    // }
-
-    // children[index] = node->Hash();
     inMemoryChildren[index] = node;
     dirty = true;
 }
@@ -57,7 +51,7 @@ void TrieNode::RemoveChild(const bytes &hash)
 void TrieNode::SetValue(const const_bytes<32> &newValue)
 {
     if (value.has_value() && value.value() == newValue) {
-            return; // No change
+            return;
     }
     
     value = newValue;
@@ -68,13 +62,13 @@ void TrieNode::SetValue(const const_bytes<32> &newValue)
 RTrieNode TrieNode::GetChild(uint8_t index, bool cache)
 {
     if (inMemoryChildren[index]) {
-            return inMemoryChildren[index];
+        return inMemoryChildren[index];
     }
     
     if (children[index].has_value()) {
-            RTrieNode childNode = Decode(children[index].value(), storage);
-            if (cache) inMemoryChildren[index] = childNode;
-            return childNode;
+        RTrieNode childNode = Decode(children[index].value(), storage);
+        if (cache) inMemoryChildren[index] = childNode;
+        return childNode;
     }
     
     return nullptr;
@@ -187,7 +181,6 @@ bytes TrieNode::Encode()
 
 void TrieNode::Store()
 {
-    // std::cout << "[+] Storing TrieNode with prefix nibbles: " << prefix.nibbles.hex() << std::endl;
     if (!IsDirty()) return;
     bytes cachedHash = this->cachedHash;
 
@@ -298,7 +291,7 @@ bool RTrie::Delete(const bytes &key)
     RTrieNode root = GetRootNode();
     bool deleted = DeleteRecursive(root, NibblesFromBytes(key, false));
     if (deleted) {
-        root->Store(); // force store after deletion
+        root->Store();
         m_Db->Delete(m_RootHash);
     }
     m_RootHash = root->Hash();
@@ -335,7 +328,6 @@ bool RTrie::InsertRecursive(const RTrieNode& node, const bytes &key, const const
     byte firstChar = key[0];
 
     if (!node->HasChild(firstChar)) {
-        // std::cout << "Inserting new leaf for key: " << key.hex() << std::endl;
         // No matching child, create new leaf
         RTrieNode newChild = std::make_shared<TrieNode>(m_Db);
         newChild->SetValue(value); // automatically set to dirty and a leaf
@@ -355,7 +347,6 @@ bool RTrie::InsertRecursive(const RTrieNode& node, const bytes &key, const const
     else if (commonLen == key.size())
     {
         // Case 2b: Key is a prefix of child's prefix, need to split
-        // std::cout << "Splitting node for key: " << key.hex() << std::endl;
         // Key is a prefix of child, need to split
         RTrieNode newNode = std::make_shared<TrieNode>(m_Db);
         newNode->prefix.nibbles = key;
@@ -374,7 +365,6 @@ bool RTrie::InsertRecursive(const RTrieNode& node, const bytes &key, const const
     }
     else
     {
-        // std::cout << "Creating branch node for key: " << key.hex() << std::endl;
         // Case 3: Partial match, need to split the child
         RTrieNode branch = std::make_shared<TrieNode>(m_Db);
         branch->prefix.nibbles = child->prefix.nibbles.sub(0, commonLen);
