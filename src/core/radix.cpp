@@ -282,6 +282,15 @@ std::optional<const_bytes<32>> RTrie::Search(const bytes &key)
     return SearchRecursive(GetRootNode(), NibblesFromBytes(key, false));
 }
 
+const_bytes<32> RTrie::Fetch(const bytes &key)
+{
+    auto result = Search(key);
+    if (result.has_value()) {
+        return result.value();
+    }
+    return const_bytes<32>();
+}
+
 bool RTrie::Delete(const bytes &key)
 {
     if (key.empty())

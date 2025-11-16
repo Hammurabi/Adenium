@@ -84,6 +84,7 @@ public:
 
     void Insert(const bytes& key, const const_bytes<32>& value);
     std::optional<const_bytes<32>> Search(const bytes& key);
+    const_bytes<32> Fetch(const bytes& key);
     bool Delete(const bytes &key);
 
     const_bytes<32> GetRootHash() const { return m_RootHash; }
