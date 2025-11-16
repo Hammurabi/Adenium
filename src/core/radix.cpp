@@ -1,6 +1,5 @@
 #include "radix.h"
 #include "db.h"
-#include <stack>
 
 TrieNode::TrieNode(Storage *db)
         : storage(db), prefix({}), value(std::nullopt), children({}), inMemoryChildren(), dirty(true), cachedHash() {}
