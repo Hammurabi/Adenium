@@ -16,6 +16,8 @@
     for binary data manipulation while maintaining idiomatic C++ naming consistency.
 */
 
+constexpr const char* NULL_STRING = "";
+
 class bytes {
 public:
     using value_type = uint8_t;
@@ -27,8 +29,12 @@ public:
     bytes(size_t size, uint8_t byte)
         : data_(size, byte) {}
 
-    bytes(const char* cstr) 
-        : data_(reinterpret_cast<const uint8_t*>(cstr), reinterpret_cast<const uint8_t*>(cstr) + std::strlen(cstr)) {}
+    bytes(const char* cstr)
+    {
+        const char* safe_cstr = NULL_STRING;
+        if (cstr != nullptr) safe_cstr = cstr;
+        data_ = std::vector<uint8_t>(reinterpret_cast<const uint8_t*>(safe_cstr), reinterpret_cast<const uint8_t*>(safe_cstr) + std::strlen(safe_cstr));
+    }
 
     bytes(const std::string& str) 
         : data_(str.begin(), str.end()) {}
@@ -50,6 +56,15 @@ public:
 
     bytes(const std::vector<uint8_t>& vec)
         : data_(vec) {}
+
+    bytes(const std::initializer_list<uint8_t>& list)
+        : data_(list) {}
+
+    bytes(const iterator& start, const iterator& end)
+        : data_(start, end) {}
+
+    bytes(const const_iterator& start, const const_iterator& end)
+        : data_(start, end) {}
 
     iterator begin() { return data_.begin(); }
     iterator end() { return data_.end(); }
@@ -200,8 +215,26 @@ public:
         return bytes(vec);
     }
 
-    void resize(size_t size) {
-        data_.resize(size);
+    void align(size_t alignment) {
+        data_.resize(( (size() + alignment - 1) / alignment * alignment ));
+    }
+    
+    std::vector<bytes> split(size_t chunk_size) const {
+        if (chunk_size == 0) return std::vector<bytes>({*this});
+
+        std::vector<bytes> result;
+        size_t total = data_.size();
+
+        for (size_t i = 0; i < total; i += chunk_size) {
+            size_t current_chunk_size = std::min(chunk_size, total - i);
+            result.emplace_back(sub(i, current_chunk_size));
+        }
+
+        return result;
+    }
+
+    void resize(size_t size, uint8_t byte = 0) {
+        data_.resize(size, byte);
     }
 
     void reserve(size_t size) {
@@ -219,6 +252,69 @@ public:
     void clear() {
         data_.clear();
     }
+
+    bool startswith(const bytes& prefix) const {
+        if (prefix.size() > data_.size()) return false;
+        return std::equal(prefix.begin(), prefix.end(), data_.begin());
+    }
+
+    bool startswith(const std::vector<uint8_t>& prefix) const {
+        if (prefix.size() > data_.size()) return false;
+        return std::equal(prefix.begin(), prefix.end(), data_.begin());
+    }
+
+    bool startswith(const std::string& prefix) const {
+        if (prefix.size() > data_.size()) return false;
+        return std::equal(prefix.begin(), prefix.end(), data_.begin());
+    }
+
+    bool startswith(const char* prefix) const {
+        size_t prefix_len = std::strlen(prefix);
+        if (prefix_len > data_.size()) return false;
+        return std::equal(prefix, prefix + prefix_len, data_.begin());
+    }
+
+    bool is_zero() const {
+        for (auto b : data_) {
+            if (b != 0) return false;
+        }
+        return true;
+    }
 private:
     std::vector<uint8_t> data_;
 };
+
+template <std::size_t NUM_BYTES>
+class const_bytes {
+public:
+    static constexpr std::size_t size_value = NUM_BYTES;  // compile-time accessible constant
+
+    const_bytes(const bytes& b = bytes(NUM_BYTES, 0)) : inner_(b) {
+        if (b.size() != NUM_BYTES)
+            throw std::invalid_argument("const_bytes: size mismatch");
+    }
+
+    // explicit const_bytes(const std::array<uint8_t, NUM_BYTES>& arr)
+    //     : inner_(arr.data(), arr.size()) {}
+
+    // explicit const_bytes(const uint8_t* data)
+    //     : inner_(data, NUM_BYTES) {}
+
+    bytes& operator*() { return inner_; }
+    const bytes& operator*() const { return inner_; }
+    const bytes* operator->() const { return &inner_; }
+
+    static constexpr std::size_t size_static() { return NUM_BYTES; }
+    std::size_t size() const { return inner_.size(); }
+    const uint8_t* data() const { return inner_.data(); }
+    std::string hex() const { return inner_.hex(); }
+
+    bool operator==(const const_bytes& other) const { return inner_ == *other; }
+    bool operator!=(const const_bytes& other) const { return !(*this == other); }
+
+    operator bytes() const { return inner_; }
+private:
+    bytes inner_;
+};
+
+typedef bytes var_bytes;
