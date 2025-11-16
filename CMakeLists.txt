@@ -53,12 +53,7 @@ target_link_libraries(Adenium PRIVATE
 
 install(TARGETS Adenium DESTINATION bin)
 
-target_compile_options(Adenium PRIVATE
-    -Wall
-    -Wextra
-    -Werror
-    -Wno-unused-parameter   # <--- Add this
-)
+target_compile_options(Adenium PRIVATE)
 
 message(STATUS "LevelDB include dirs: ${LevelDB_INCLUDE_DIRS}")
 message(STATUS "LevelDB library dirs: ${LevelDB_LIBRARY_DIRS}")
