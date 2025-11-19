@@ -1,6 +1,8 @@
 #include "radix.h"
 #include "db.h"
 
+lru_cache<bytes, RTrieNode> TrieNodeCache(1000000);
+
 TrieNode::TrieNode(Storage *db)
         : storage(db), prefix({}), value(std::nullopt), children({}), inMemoryChildren(), dirty(true), cachedHash() {}
 
@@ -83,6 +85,7 @@ bool TrieNode::IsDirty() const
         return true;
     }
 
+    // Check only in-memory children (stored children are clean by definition)
     for (uint8_t i = 0; i < 16; i++) {
         if (inMemoryChildren[i] && inMemoryChildren[i]->IsDirty()) {
             return true;
@@ -90,6 +93,21 @@ bool TrieNode::IsDirty() const
     }
 
     return false;
+    // if (dirty) {
+    //     return true;
+    // }
+
+    // if (value.has_value() && !prefix.isLeaf) {
+    //     return true;
+    // }
+
+    // for (uint8_t i = 0; i < 16; i++) {
+    //     if (inMemoryChildren[i] && inMemoryChildren[i]->IsDirty()) {
+    //         return true;
+    //     }
+    // }
+
+    // return false;
 }
 
 bool TrieNode::ShouldDelete()
@@ -111,16 +129,14 @@ bool TrieNode::Update()
 
     for (uint8_t i = 0; i < 16; i++) {
         if (inMemoryChildren[i] && inMemoryChildren[i]->IsDirty()) {
-            if (inMemoryChildren[i]->Update()) {
-                inMemoryChildren[i]->Store();
-            }
-
-            bytes hash = inMemoryChildren[i]->Hash();
+            inMemoryChildren[i]->Store(inMemoryChildren[i]);
+            
+            bytes hash = inMemoryChildren[i]->cachedHash; // Use cached hash instead of calling Hash()
             if (hash != children[i]) {
+                children[i] = hash;
                 dirty = true;
                 updated = true;
             }
-            children[i] = hash;
         }
         inMemoryChildren[i] = nullptr;
     }
@@ -132,11 +148,45 @@ bool TrieNode::Update()
     }
 
     return updated || dirty;
+    // bool updated = false;
+
+    // for (uint8_t i = 0; i < 16; i++) {
+    //     if (inMemoryChildren[i] && inMemoryChildren[i]->IsDirty()) {
+    //         inMemoryChildren[i]->Store(inMemoryChildren[i]);
+    //         // if (inMemoryChildren[i]->Update()) {
+    //         //     // TrieNodeCache.put(inMemoryChildren[i]->Hash(), inMemoryChildren[i]);
+    //         // }
+
+    //         bytes hash = inMemoryChildren[i]->Hash();
+    //         if (hash != children[i]) {
+    //             dirty = true;
+    //             updated = true;
+    //         }
+    //         children[i] = hash;
+    //     }
+    //     inMemoryChildren[i] = nullptr;
+    // }
+
+    // if (value.has_value() && !prefix.isLeaf) {
+    //     prefix.isLeaf = true;
+    //     dirty = true;
+    //     return true;
+    // }
+
+    // return updated || dirty;
 }
 
 bytes TrieNode::Hash()
 {
-    if (!IsDirty() && !cachedHash->is_zero()) return cachedHash;
+    // Check if we have a valid cached hash
+    if (!dirty && !cachedHash->is_zero()) {
+        return cachedHash;
+    }
+
+    // Only update if dirty
+    if (dirty) {
+        Update();
+    }
 
     bytes encoded = Encode();
     bytes hash = Keccak(encoded);
@@ -144,11 +194,23 @@ bytes TrieNode::Hash()
     dirty = false;
     
     return hash;
+    // if (!IsDirty() && !cachedHash->is_zero()) return cachedHash;
+
+    // bytes encoded = Encode();
+    // bytes hash = Keccak(encoded);
+    // cachedHash = const_bytes<32>(hash);
+    // dirty = false;
+    
+    // return hash;
 }
 
 bytes TrieNode::Encode()
 {
-    if (IsDirty()) {
+    // if (!dirty && !encoded.empty()) {
+    //     return encoded;
+    // }
+
+    if (dirty) {
         Update();
     }
 
@@ -175,32 +237,54 @@ bytes TrieNode::Encode()
         data += value.value();
     }
 
-    return  data + childMask.to_bytes() + hashes;
+    encoded = data + childMask.to_bytes() + hashes;
+    return encoded;
 }
 
-void TrieNode::Store()
+void TrieNode::Store(const RTrieNode& self)
 {
     if (!IsDirty()) return;
-    bytes cachedHash = this->cachedHash;
+    
+    bytes oldHash = this->cachedHash;
 
+    // Store dirty children first
     for (uint8_t i = 0; i < 16; i++) {
         if (inMemoryChildren[i]) {
-            inMemoryChildren[i]->Store();
+            inMemoryChildren[i]->Store(inMemoryChildren[i]);
+            children[i] = inMemoryChildren[i]->cachedHash;
+            inMemoryChildren[i] = nullptr;
         }
     }
+
     bytes encoded = Encode();
     bytes hash = Keccak(encoded);
-    if (storage->Get(hash).empty()) {
+    cachedHash = const_bytes<32>(hash);
+    
+    // Only put if hash changed or this is a new node
+    if (oldHash.is_zero() || oldHash != hash) {
         storage->Put(hash, encoded);
-        if (!cachedHash.is_zero() && cachedHash != hash) {
-            storage->Delete(cachedHash);
+        TrieNodeCache.put(hash, self);
+        
+        // Delete old hash only if it changed
+        if (!oldHash.is_zero() && oldHash != hash) {
+            storage->Delete(oldHash);
         }
     }
-    for (uint8_t i = 0; i < 16; i++) {
-        if (inMemoryChildren[i]) {
-            inMemoryChildren[i]->Store();
-        }
-    }
+    // bytes cachedHash = this->cachedHash;
+    // bytes encoded = Encode();
+    // bytes hash = Keccak(encoded);
+    // if (storage->Get(hash).empty()) {
+    //     storage->Put(hash, encoded);
+    //     TrieNodeCache.put(hash, self);
+    //     if (!cachedHash.is_zero() && cachedHash != hash) {
+    //         storage->Delete(cachedHash);
+    //     }
+    // }
+    // for (uint8_t i = 0; i < 16; i++) {
+    //     if (inMemoryChildren[i]) {
+    //         inMemoryChildren[i]->Store(inMemoryChildren[i]);
+    //     }
+    // }
 }
 
 void TrieNode::Delete()
@@ -211,6 +295,11 @@ void TrieNode::Delete()
 
 RTrieNode Decode(const bytes &hash, Storage *db)
 {
+    auto cachedNode = TrieNodeCache.get(hash);
+    if (cachedNode.has_value()) {
+        return cachedNode.value();
+    }
+
     RTrieNode node = std::make_shared<TrieNode>(db);
     node->cachedHash = hash;
     node->dirty = false;
@@ -246,6 +335,8 @@ RTrieNode Decode(const bytes &hash, Storage *db)
         }
     }
 
+    TrieNodeCache.put(hash, node);
+
     return node;
 }
 
@@ -268,10 +359,11 @@ void RTrie::Insert(const bytes &key, const const_bytes<32> &value)
     RTrieNode root = GetRootNode();
 
     if (InsertRecursive(root, keyNibbles, value)) {
-        root->Store();
+        root->Store(root);
         m_Db->Delete(m_RootHash);
     }
     m_RootHash = root->Hash();
+    TrieNodeCache.put(m_RootHash, root);
 }
 
 std::optional<const_bytes<32>> RTrie::Search(const bytes &key)
@@ -299,10 +391,11 @@ bool RTrie::Delete(const bytes &key)
     RTrieNode root = GetRootNode();
     bool deleted = DeleteRecursive(root, NibblesFromBytes(key, false));
     if (deleted) {
-        root->Store();
+        root->Store(root);
         m_Db->Delete(m_RootHash);
     }
     m_RootHash = root->Hash();
+    TrieNodeCache.put(m_RootHash, root);
     return deleted;
 }
 
