@@ -1,10 +1,11 @@
 #pragma once
 #include <string>
 #include <memory>
-#include "../reflect.h"
 #include "../util.h"
 #include "../bytes.h"
+#include "lru.h"
 
+struct RTrie;
 class Storage;
 struct TrieNode;
 typedef std::shared_ptr<TrieNode> RTrieNode;
@@ -25,6 +26,7 @@ struct TrieNode
     bool                                                dirty;              // tracks if node needs recomputing
     const_bytes<32>                                     cachedHash;         // cache hash to avoid recomputation
     Storage*                                            storage;
+    bytes                                               cachedEncode;
 
     TrieNode(Storage *db);
     void AddChild(uint8_t index, const const_bytes<32>& hash);
@@ -40,7 +42,7 @@ struct TrieNode
     bytes Hash();
 
     bytes Encode();
-    void Store();
+    void Store(const RTrieNode& self);
     void Delete();
     bool HasChild(uint8_t index) const {
         return children[index].has_value() || inMemoryChildren[index] != nullptr;
@@ -88,7 +90,12 @@ public:
     bool Delete(const bytes &key);
 
     const_bytes<32> GetRootHash() const { return m_RootHash; }
+
+    bool IsCached(const bytes& hash) const;
+    RTrieNode GetCachedNode(const bytes& hash);
+    void CacheNode(const bytes& hash, const RTrieNode& node);
     RTrieNode GetRootNode();
+    Storage*   GetStorage() const { return m_Db; }
 private:
     static size_t FindCommonPrefixLength(const bytes& a, const bytes& b);
     bool InsertRecursive(const RTrieNode& node, const bytes& key, const const_bytes<32>& value);
@@ -97,4 +104,5 @@ private:
 
     Storage*    m_Db;
     const_bytes<32> m_RootHash;
+    // lru_cache<bytes, RTrieNode> m_NodeCache;
 };

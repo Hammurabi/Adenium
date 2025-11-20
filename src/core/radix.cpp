@@ -206,13 +206,23 @@ bytes TrieNode::Hash()
 
 bytes TrieNode::Encode()
 {
-    // if (!dirty && !encoded.empty()) {
-    //     return encoded;
-    // }
-
     if (dirty) {
         Update();
     }
+
+    bool isEmpty = !prefix.isLeaf;
+    bool isZero  = (!isEmpty && value.value()->is_zero());
+
+    size_t nibblesCount = prefix.nibbles.size();
+    
+    if (nibblesCount % 2 == 0) {
+        nibblesCount += 2;
+    } else {
+        nibblesCount += 1;
+    }
+
+    bytes encoded;
+    encoded.reserve(4 + 32 * NumChildren() + nibblesCount / 2 + (value.has_value() && !isZero ? 32 : 0));
 
     bitmask_t<16> childMask;
     for (uint8_t i = 0; i < 16; i++) {
@@ -221,24 +231,68 @@ bytes TrieNode::Encode()
         }
     }
 
-    bytes hashes;
+    encoded.encode_nibbles(prefix.nibbles, true, isEmpty, isZero);
+    if (value.has_value() && !isZero) encoded += value.value();
+    encoded += childMask.to_bytes();
     for (uint8_t i = 0; i < 16; i++) {
        if (children[i].has_value()) {
-           hashes += children[i].value();
+           encoded += children[i].value();
        }
     }
 
-    bool isEmpty = !prefix.isLeaf;
-    bool isZero  = (!isEmpty && value.value()->is_zero());
-    bytes nibbles = NibblesToBytes(prefix.nibbles, isEmpty, isZero, true);
+    cachedEncode = encoded;
+    return encoded;
+}
 
-    bytes data = EncodeVarBytes(nibbles);
-    if (value.has_value()) {
-        data += value.value();
+RTrieNode Decode(const bytes &hash, Storage *db)
+{
+    auto cachedNode = TrieNodeCache.get(hash);
+    if (cachedNode.has_value()) {
+        return cachedNode.value();
     }
 
-    encoded = data + childMask.to_bytes() + hashes;
-    return encoded;
+    RTrieNode node = std::make_shared<TrieNode>(db);
+    node->cachedHash = hash;
+    node->dirty = false;
+
+    bytes data;
+    data.reserve(768);
+    if (!db->Get(hash, &data)) {
+        throw std::runtime_error("RTrie node not found in storage for hash: " + hash.hex());
+    }
+
+    data.seek(0);
+
+    size_t valueInfo = 0;
+    node->prefix.nibbles = data.decode_nibbles(&valueInfo);
+
+    switch (valueInfo) {
+        case 0:
+            node->prefix.isLeaf = false;
+            break;
+        case 1:
+            node->prefix.isLeaf = true;
+            node->value = data.decode_bytes(32);
+            break;
+        case 2:
+            node->prefix.isLeaf = true;
+            node->value = bytes(32, 0);
+            break;
+        default:
+            throw std::runtime_error("Invalid value info in RTrie node decoding");
+    }
+
+    bytes bitmask = data.decode_bytes(2);
+    bitmask_t<16> childMask(bitmask);
+    for (uint8_t i = 0; i < 16; i++) {
+        if (childMask.get(i)) {
+            node->children[i] = data.decode_bytes(32);
+        }
+    }
+
+    TrieNodeCache.put(hash, node);
+
+    return node;
 }
 
 void TrieNode::Store(const RTrieNode& self)
@@ -291,53 +345,6 @@ void TrieNode::Delete()
 {
     cachedHash = Hash();
     storage->Delete(cachedHash);
-}
-
-RTrieNode Decode(const bytes &hash, Storage *db)
-{
-    auto cachedNode = TrieNodeCache.get(hash);
-    if (cachedNode.has_value()) {
-        return cachedNode.value();
-    }
-
-    RTrieNode node = std::make_shared<TrieNode>(db);
-    node->cachedHash = hash;
-    node->dirty = false;
-
-    bytes data = db->Get(hash);
-    SafeStream stream;
-    stream.FromBytes(data);
-
-    size_t valueInfo = 0;
-    node->prefix.nibbles = BytesToNibbles(DecodeVarBytes(&stream), &valueInfo);
-
-    switch (valueInfo) {
-        case 0:
-            node->prefix.isLeaf = false;
-            break;
-        case 1:
-            node->prefix.isLeaf = true;
-            node->value = stream.ReadBytes(32);
-            break;
-        case 2:
-            node->prefix.isLeaf = true;
-            node->value = bytes(32, 0);
-            break;
-        default:
-            throw std::runtime_error("Invalid value info in RTrie node decoding");
-    }
-
-    bytes bitmask = stream.ReadBytes(2);
-    bitmask_t<16> childMask(bitmask);
-    for (uint8_t i = 0; i < 16; i++) {
-        if (childMask.get(i)) {
-            node->children[i] = stream.ReadBytes(32);
-        }
-    }
-
-    TrieNodeCache.put(hash, node);
-
-    return node;
 }
 
 RTrie::RTrie(Storage *Db, const const_bytes<32> &rootHash)
