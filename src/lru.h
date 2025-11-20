@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <list>
 #include <optional>
+#include <mutex>
 
 struct NoEvict {
     template<typename K, typename V>
@@ -32,10 +33,12 @@ public:
         : m_Capacity(capacity), m_EvictFn() {}
 
     bool contains(const Key& key) const {
+        std::lock_guard<std::mutex> lock(m_Mutex);
         return m_Map.find(key) != m_Map.end();
     }
 
     std::optional<Value> get(const Key& key) {
+        std::lock_guard<std::mutex> lock(m_Mutex);
         auto it = m_Map.find(key);
         if (it == m_Map.end()) return std::nullopt;
 
@@ -44,6 +47,7 @@ public:
     }
 
     void put(const Key& key, const Value& value) {
+        std::lock_guard<std::mutex> lock(m_Mutex);
         auto it = m_Map.find(key);
         if (it != m_Map.end()) {
             it->second->second = value;
@@ -60,6 +64,7 @@ public:
     }
 
     void erase(const Key& key, bool call_evict = true) {
+        std::lock_guard<std::mutex> lock(m_Mutex);
         auto it = m_Map.find(key);
         if (it != m_Map.end()) {
             if (call_evict) m_EvictFn(it->second->first, it->second->second);
@@ -68,9 +73,13 @@ public:
         }
     }
 
-    size_t size() const { return m_Map.size(); }
+    size_t size() const { 
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        return m_Map.size(); 
+    }
     size_t capacity() const { return m_Capacity; }
     void clear() {
+        std::lock_guard<std::mutex> lock(m_Mutex);
         for (const auto& item : m_Items) {
             m_EvictFn(item.first, item.second);
         }
@@ -91,4 +100,5 @@ private:
     EvictFn m_EvictFn;
     std::list<std::pair<Key, Value>> m_Items;
     std::unordered_map<Key, typename std::list<std::pair<Key, Value>>::iterator, std::hash<Key>> m_Map;
+    mutable std::mutex m_Mutex;
 };
