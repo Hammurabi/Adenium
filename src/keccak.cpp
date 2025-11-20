@@ -12,7 +12,7 @@ bytes Keccak(const bytes& in)
 {
     uint8_t o[32];
     sha3_256(o, 32, reinterpret_cast<const uint8_t*>(in.data()), in.size());
-    return std::string(reinterpret_cast<const char*>(o), 32);
+    return bytes(o, 32);
 }
 
 void Keccak(const uint8_t *in, size_t length, uint8_t *out)
@@ -24,7 +24,7 @@ bytes Keccak512(const bytes& in)
 {
     uint8_t o[64];
     sha3_512(o, 64, reinterpret_cast<const uint8_t*>(in.data()), in.size());
-    return std::string(reinterpret_cast<const char*>(o), 64);
+    return bytes(o, 64);
 }
 
 void Keccak512(const uint8_t *in, size_t length, uint8_t *out)
