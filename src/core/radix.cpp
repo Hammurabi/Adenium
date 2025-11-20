@@ -39,6 +39,7 @@ void TrieNode::RemoveChild(const bytes &hash)
     for (uint8_t i = 0; i < 16; i++) {
         if (children[i].has_value() && children[i].value() == hash) {
             children[i] = std::nullopt;
+            inMemoryChildren[i] = nullptr;
             dirty = true;
         }
         else if (inMemoryChildren[i] && inMemoryChildren[i]->cachedHash == hash) {
@@ -137,8 +138,8 @@ bool TrieNode::Update()
                 dirty = true;
                 updated = true;
             }
+            inMemoryChildren[i] = nullptr;  // Only clear after processing dirty children
         }
-        inMemoryChildren[i] = nullptr;
     }
 
     if (value.has_value() && !prefix.isLeaf) {
@@ -313,6 +314,7 @@ void TrieNode::Store(const RTrieNode& self)
     bytes encoded = Encode();
     bytes hash = Keccak(encoded);
     cachedHash = const_bytes<32>(hash);
+    dirty = false;  // Mark as clean after storing
     
     // Only put if hash changed or this is a new node
     if (oldHash.is_zero() || oldHash != hash) {
@@ -565,6 +567,9 @@ bool RTrie::DeleteRecursive(const RTrieNode& node, const bytes &key)
 
     if (deleted)
     {
+        // Mark node as dirty since its child has changed
+        node->dirty = true;
+        
         if (!child->prefix.isLeaf && child->NumChildren() == 1)
         {
             // Compress path if child has no value and only one child
