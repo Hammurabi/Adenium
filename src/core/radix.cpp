@@ -137,8 +137,8 @@ bool TrieNode::Update()
                 dirty = true;
                 updated = true;
             }
+            inMemoryChildren[i] = nullptr;  // Only clear after processing dirty children
         }
-        inMemoryChildren[i] = nullptr;
     }
 
     if (value.has_value() && !prefix.isLeaf) {
@@ -313,6 +313,7 @@ void TrieNode::Store(const RTrieNode& self)
     bytes encoded = Encode();
     bytes hash = Keccak(encoded);
     cachedHash = const_bytes<32>(hash);
+    dirty = false;  // Mark as clean after storing
     
     // Only put if hash changed or this is a new node
     if (oldHash.is_zero() || oldHash != hash) {
