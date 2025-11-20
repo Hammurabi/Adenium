@@ -566,6 +566,9 @@ bool RTrie::DeleteRecursive(const RTrieNode& node, const bytes &key)
 
     if (deleted)
     {
+        // Mark node as dirty since its child has changed
+        node->dirty = true;
+        
         if (!child->prefix.isLeaf && child->NumChildren() == 1)
         {
             // Compress path if child has no value and only one child
