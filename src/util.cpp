@@ -747,6 +747,10 @@ uint64_t FromDecimal(const std::string &Decimal)
 
 bytes MerkleRoot(const std::vector<bytes> &leaves)
 {
+    if (leaves.empty()) {
+        return EMPTY_BYTES;
+    }
+    
     std::vector<bytes> layer(leaves);
 
     while (layer.size() > 1) {
