@@ -7,6 +7,10 @@ OUTPUT_FILE = os.path.join(CPP_DIR, "cbe.cpp")
 CPP_KEYWORDS = {"const", "volatile", "static", "mutable", "register", "inline", "signed", "unsigned", "short", "long"}
 
 cbe_pattern = re.compile(r'\b(cbe\s+(?:class|struct))\s+(\w+)\s*\{', re.MULTILINE)
+cbe_using_pattern = re.compile(
+    r'\bcbe\s+using\s+(\w+)\s*=\s*std::variant\s*<\s*([^>]+?)\s*>\s*;',
+    re.DOTALL | re.MULTILINE
+)
 prop_pattern = re.compile(
     r'\bprop\s*\((.*?)\)\s*([A-Za-z_:\d<>\s,\*\&]+)\s+(\w+)\s*;',
     re.MULTILINE
@@ -42,6 +46,8 @@ def parse_cpp_file(file_path):
         content = f.read()
 
     classes = []
+    using_types = []
+
     for match in cbe_pattern.finditer(content):
         name = match.group(2)
         start = match.end()
@@ -78,7 +84,20 @@ def parse_cpp_file(file_path):
 
         classes.append((name, props))
 
-    return classes
+    for match in cbe_using_pattern.finditer(content):
+        alias_name = match.group(1)
+        variants_block = match.group(2)
+
+        # Split inner types by comma
+        variants = [
+            v.strip()
+            for v in variants_block.split(',')
+            if v.strip()
+        ]
+
+        using_types.append((alias_name, variants))
+
+    return classes, using_types
 
 def split_template_args(arg_str):
     """
@@ -149,21 +168,21 @@ def decode_arg(data, is_arg):
     return f"    {data};\n"
     
 def encode_vector(field_name, template_arg, macro_args):
-    code = f"    data += EncodeVarInt(static_cast<uint64_t>(obj.{field_name}.size()));\n"
+    code = f"    data.encode_varint(static_cast<uint64_t>(obj.{field_name}.size()));\n"
     code += f"    for (const auto& item : obj.{field_name}) {'{'}\n    {encode_field('item', template_arg, macro_args, is_child='')}{'    }'}\n"
     return code
 
 std_variant = {
     'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"""    {{
         uint64_t index = static_cast<uint64_t>({is_child}{field_name}.index());
-        data += EncodeVarInt(index);
+        data.encode_varint(index);
         std::visit([&data](auto&& arg) {{
             data += encode(arg);
         }}, {is_child}{field_name});
     }}""",
     'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: (
         "    {\n"
-        "        uint64_t index = DecodeVarInt(&stream);\n"
+        "        uint64_t index = stream.decode_varint();\n"
         "        switch (index) {\n" +
         ''.join([f'            case {i}: {{ {is_child}{field_name} = Decoder<{arg}>::decode(stream); break; }}\n'
                  for i, arg in enumerate(template_args)]) +
@@ -175,58 +194,58 @@ std_variant = {
 
 encoders = {
     'uint64_t': {
-        'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += EncodeVarInt({is_child}{field_name});",
-        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = DecodeVarInt(&stream);",
+        'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data.encode_varint({is_child}{field_name});",
+        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.decode_varint();",
     },
     'uuid': {
-        'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += EncodeVarInt({is_child}{field_name});",
-        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = DecodeVarInt(&stream);",
+        'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data.encode_varint({is_child}{field_name});",
+        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.decode_varint();",
     },
     'std::string': {
-        'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += EncodeVarBytes({is_child}{field_name});",
-        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = DecodeVarBytes(&stream);",
+        'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data.encode_varbytes({is_child}{field_name});",
+        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.decode_varbytes();",
     },
     'bool': {
         'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += bytes(1, {is_child}{field_name});",
-        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.ReadByte() == 0 ? false : true;",
+        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.decode_byte() == 0 ? false : true;",
     },
     'byte': {
         'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += bytes(1, {is_child}{field_name});",
-        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.ReadByte();",
+        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.decode_byte();",
     },
     'bytes': {
-        'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += EncodeVarBytes({is_child}{field_name});",
-        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = DecodeVarBytes(&stream);",
+        'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data.encode_varbytes({is_child}{field_name});",
+        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.decode_varbytes();",
     },
     'const_bytes': {
         'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += {is_child}{field_name};",
-        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.ReadBytes({template_args[0]});",
+        'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    {is_child}{field_name} = stream.decode_bytes({template_args[0]});",
     },
     'bls::G1Element': {
         'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += {is_child}{field_name}.Serialize();",
         'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"""    {{
-        bytes g1_bytes = stream.ReadBytes(bls::G1Element::SIZE);
+        bytes g1_bytes = stream.decode_bytes(bls::G1Element::SIZE);
         {is_child}{field_name} = bls::G1Element::FromBytes(g1_bytes.to_vector());
     }}""",
     },
     'bls::G2Element': {
         'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += {is_child}{field_name}.Serialize();",
         'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"""    {{
-        bytes g2_bytes = stream.ReadBytes(bls::G2Element::SIZE);
+        bytes g2_bytes = stream.decode_bytes(bls::G2Element::SIZE);
         {is_child}{field_name} = bls::G2Element::FromBytes(g2_bytes.to_vector());
     }}""",
     },
     'bls::PrivateKey': {
         'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"    data += {is_child}{field_name}.Serialize();",
         'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"""    {{
-        bytes sk_bytes = stream.ReadBytes(bls::PrivateKey::SIZE);
+        bytes sk_bytes = stream.decode_bytes(bls::PrivateKey::SIZE);
         {is_child}{field_name} = bls::PrivateKey::FromBytes(sk_bytes.to_vector());
     }}""",
     },
     'std::vector': {
         'encode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: encode_vector(field_name, template_args[0], macro_args),
         'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"""    {{
-        uint64_t size = DecodeVarInt(&stream);
+        uint64_t size = stream.decode_varint();
         {is_child}{field_name}.clear();
         for (uint64_t i = 0; i < size; ++i) {{
             {is_child}{field_name}.push_back(Decoder<{template_args[0]}>::decode(stream));
@@ -249,7 +268,7 @@ encoders = {
         data.push_back(0);
     }}""",
         'decode': lambda field_name, base_type, template_args, macro_args, is_child, is_arg: f"""    {{
-        byte has_value = stream.ReadByte();
+        byte has_value = stream.decode_byte();
         if (has_value > 0) {{
             {is_child}{field_name} = Decoder<{template_args[0]}>::decode(stream);
         }} else {{
@@ -294,11 +313,16 @@ def decode_field(field_name, type_str, macro_args, is_child='obj.', is_arg=False
 
     return f"{dec}\n"
 
-def generate_forward_decls(classes):
+def generate_forward_decls(classes, usings):
     code = "// Forward declarations\n"
     for class_name, _ in classes:
         code += f"template<> bytes encode(const {class_name}& obj);\n"
-        code += f"template<> {class_name} decode(SafeStream& stream);\n"
+        code += f"template<> void encode(bytes& data, const {class_name}& obj);\n"
+        code += f"template<> {class_name} decode(bytes& stream);\n"
+    for alias_name, _ in usings:
+        code += f"template<> bytes encode(const {alias_name}& obj);\n"
+        code += f"template<> void encode(bytes& data, const {alias_name}& obj);\n"
+        code += f"template<> {alias_name} decode(bytes& stream);\n"
     code += """
 template<>
 bytes encode(const bytes& obj) {
@@ -306,19 +330,14 @@ bytes encode(const bytes& obj) {
 }
 
 template<>
-bytes decode(SafeStream& stream) {
-    return DecodeVarBytes(&stream);
-}
-
-template<>
-uint64_t decode(SafeStream& stream) {
-    return DecodeVarInt(&stream);
+uint64_t decode(bytes& stream) {
+    return stream.decode_varint();
 }
 """
     code += "\n"
     return code
 
-def generate_cbe_implementation(classes, include_headers):
+def generate_cbe_implementation(classes, usings, include_headers):
     # Start with includes
     code = '#include "cbe.h"\n'
     code += f'#include <map>\n'
@@ -328,38 +347,68 @@ def generate_cbe_implementation(classes, include_headers):
     code += f'#include <optional>\n'
     for header in include_headers:
         code += f'#include "{header}"\n'
-    code += '\n' + generate_forward_decls(classes) + '\n'
+    code += '\n' + generate_forward_decls(classes, usings) + '\n'
 
     for class_name, fields in classes:
+        pass
         # Encode
         code += f'template<>\nbytes encode(const {class_name}& obj) {{\n'
         code += '    bytes data;\n'
+        code += '    data.reserve(sizeof(obj));\n'
+        code += '    encode(data, obj);\n'
+        code += '    return data;\n'
+        code += '}\n\n'
+        # Encode<>
+        code += f'template<>\nvoid encode(bytes& data, const {class_name}& obj) {{\n'
         for field_name, type_str, macro_args in fields:
             code += encode_field(field_name, type_str, macro_args)
             # code += f'    data += encode_field(data, obj.{field_name});\n'
-        code += '    return data;\n'
         code += '}\n\n'
 
         # Decode<>
-        code += f'template<>\n{class_name} decode(SafeStream& stream) {{\n'
+        code += f'template<>\n{class_name} decode(bytes& stream) {{\n'
         code += f'    {class_name} obj;\n'
+        code += f'    stream.seek(0);\n'
         for field_name, type_str, macro_args in fields:
             code += decode_field(field_name, type_str, macro_args)
         code += '    return obj;\n'
         code += '}\n\n'
-
-        # Decode<>
-        code += f'template<>\n{class_name} decode(const bytes& data) {{\n'
-        code += f'    SafeStream stream;\n'
-        code += f'    stream.FromBytes(data);\n'
-        code += f'    return decode<{class_name}>(stream);\n'
+    
+    for alias_name, variants in usings:
+        num_variants = len(variants)
+        code += f'// cbe using {alias_name} with {num_variants} variants\n'
+        code += f'template<>\nbytes encode(const {alias_name}& obj) {{\n'
+        code += '    bytes data;\n'
+        code += '    data.reserve(variant_max_size(obj));\n'
+        code += '    encode(data, obj);\n'
+        code += '    return data;\n'
         code += '}\n\n'
-
+        code += f'// cbe using {alias_name} with {num_variants} variants\n'
+        code += f'template<>\nvoid encode(bytes& data, const {alias_name}& obj) {{\n'
+        code += '    data.reserve(variant_max_size(obj));\n'
+        code += '    {\n'
+        code += '        uint64_t index = static_cast<uint64_t>(obj.index());\n'
+        code += '        data.encode_varint(index);\n'
+        code += '        std::visit([&data](auto&& arg) {\n'
+        code += '            encode(data, arg);\n'
+        code += '        }, obj);\n'
+        code += '    }\n'
+        code += '}\n\n'
+        code += f'template<>\n{alias_name} decode(bytes& stream) {{\n'
+        code += f'    {alias_name} obj;\n'
+        code += '    {\n'
+        code += '        uint64_t index = stream.decode_varint();\n'
+        code += '        switch (index) {\n'
+        for i, variant in enumerate(variants):
+            code += f'            case {i}: {{ obj = Decoder<{variant}>::decode(stream); break; }}\n'
+        code += '            default: throw std::runtime_error("Invalid variant index");\n'
+        code += '        }\n'
+        code += '    }\n'
+        code += '    return obj;\n'
+        code += '}\n\n'
     # Decode<T>
-    code += f'template<typename T>\nT decode(const bytes& data) {{\n'
-    code += f'    SafeStream stream;\n'
-    code += f'    stream.FromBytes(data);\n'
-    code += '    return decode<T>(stream);\n'
+    code += f'template<typename T>\nT decode(bytes& data) {{\n'
+    code += '   return decode<T>(data);\n'
     code += '}\n\n'
 
     return code
@@ -367,19 +416,21 @@ def generate_cbe_implementation(classes, include_headers):
 
 def main():
     all_classes = []
+    all_usings = []
     include_headers = set(['util.h'])
 
     for root, _, files in os.walk(CPP_DIR):
         for file in files:
             if file.endswith(".h") or file.endswith(".cpp"):
                 path = os.path.join(root, file)
-                classes = parse_cpp_file(path)
-                if classes:
+                classes, using = parse_cpp_file(path)
+                if classes or using:
                     rel_path = os.path.relpath(path, CPP_DIR).replace("\\", "/")
                     include_headers.add(rel_path)  # save relative path for #include
                 all_classes.extend(classes)
+                all_usings.extend(using)
 
-    impl_code = generate_cbe_implementation(all_classes, include_headers)
+    impl_code = generate_cbe_implementation(all_classes, all_usings, include_headers)
     with open(OUTPUT_FILE, 'w') as f:
         f.write(impl_code)
 
