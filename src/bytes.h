@@ -17,6 +17,7 @@
 */
 
 constexpr const char* NULL_STRING = "";
+typedef uint8_t  byte;
 
 class bytes;
 struct bytes_hash {
@@ -119,12 +120,15 @@ public:
     void encode_uint32(uint32_t value);
     void encode_uint64(uint64_t value);
     void encode_varint(uint64_t value);
+    void encode_varbytes(const bytes& data);
 
     uint16_t decode_uint16();
     uint32_t decode_uint32();
     uint64_t decode_uint64();
     uint64_t decode_varint();
+    byte decode_byte();
     bytes decode_bytes(size_t length);
+    bytes decode_varbytes();
 
     void encode_nibbles(const bytes& nibbles, bool encodePrefix, bool isEmpty, bool isZero);
     bytes decode_nibbles(size_t* info = nullptr);
@@ -162,6 +166,10 @@ private:
 };
 
 typedef bytes var_bytes;
+
+bytes u16_to_bytes(uint16_t value);
+bytes v61_to_bytes(uint64_t value);
+bytes from_hex(const bytes& str);
 
 // template<typename T>
 // T lton(T value) {
