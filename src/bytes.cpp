@@ -206,6 +206,25 @@ bytes operator+(const char* cstr, const bytes& b) {
     return result;
 }
 
+bytes u16_to_bytes(uint16_t value)
+{
+    bytes v = bytes();
+    v.encode_uint16(value);
+    return v;
+}
+
+bytes v61_to_bytes(uint64_t value)
+{
+    bytes v = bytes();
+    v.encode_varint(value);
+    return v;
+}
+
+bytes from_hex(const bytes &str)
+{
+    return bytes::from_hex(str.to_string());
+}
+
 bytes& bytes::operator+=(const bytes& other) {
     data_.insert(data_.end(), other.data_.begin(), other.data_.end());
     return *this;
@@ -423,6 +442,12 @@ void bytes::encode_varint(uint64_t value)
     }
 }
 
+void bytes::encode_varbytes(const bytes &data)
+{
+    encode_varint(static_cast<uint64_t>(data.size()));
+    append(data);
+}
+
 uint16_t bytes::decode_uint16()
 {
     if (pos_ + 2 > data_.size())
@@ -509,6 +534,14 @@ uint64_t bytes::decode_varint()
     return value;
 }
 
+byte bytes::decode_byte()
+{
+    if (pos_ >= data_.size())
+        throw std::out_of_range("bytes::decode_byte: insufficient data");
+    
+    return data_[pos_++];
+}
+
 bytes bytes::decode_bytes(size_t length)
 {
     if (pos_ + length > data_.size())
@@ -517,6 +550,12 @@ bytes bytes::decode_bytes(size_t length)
     bytes result = sub(pos_, length);
     pos_ += length;
     return result;
+}
+
+bytes bytes::decode_varbytes()
+{
+    uint64_t length = decode_varint();
+    return decode_bytes(static_cast<size_t>(length));
 }
 
 void bytes::encode_nibbles(const bytes& nibbles, bool encodePrefix, bool isEmpty, bool isZero)
