@@ -40,3 +40,4 @@ gateway/test/*
 gateway/keypair.json
 
 res/private/*
+PrivateCredentials.json
